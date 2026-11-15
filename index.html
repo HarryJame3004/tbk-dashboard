@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TBK - Quản lý từ xa</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Arial, sans-serif; background: #f4f6f8; color: #1a1a1a; }
+  header { background: #111827; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header p { margin: 2px 0 0; font-size: 13px; color: #cbd5e1; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 12px; }
+  .muted { color: #6b7280; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .service { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; }
+  .service .name { font-weight: 600; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; margin-top: 6px; }
+  .up { background: #dcfce7; color: #166534; }
+  .down { background: #fee2e2; color: #991b1b; }
+  .unknown { background: #e5e7eb; color: #374151; }
+  .task { margin-bottom: 12px; }
+  .task .row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .bar { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .bar > div { height: 100%; background: #2563eb; width: 0%; }
+  .tokens { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .token-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+  .token-box .value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; }
+  input[type="password"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
+  button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-size: 15px; cursor: pointer; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .login-wrap { max-width: 420px; margin: 60px auto; }
+  .error { color: #b91c1c; font-size: 14px; margin-top: 8px; min-height: 18px; }
+  .ok { color: #166534; font-size: 14px; margin-top: 8px; }
+  .cmd-row { display: flex; gap: 8px; }
+  .cmd-row input { flex: 1; }
+  .cmd-item { border-top: 1px solid #e5e7eb; padding: 10px 0; font-size: 14px; }
+  .cmd-item:first-of-type { border-top: 0; }
+  .cmd-meta { color: #6b7280; font-size: 12px; margin-top: 4px; }
+  .reply { background: #f9fafb; border-left: 3px solid #2563eb; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+  @media (max-width: 600px) { .tokens { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>TBK - Quản lý từ xa</h1>
+    <p>TBK Intelligence + Tiểu Tiểu Khôi Intelligence</p>
+  </div>
+  <button id="logoutBtn" type="button" hidden>Đăng xuất</button>
+</header>
+<main>
+  <div id="loginBox" class="card login-wrap">
+    <h2>Đăng nhập</h2>
+    <p class="muted">Nhập mật khẩu để vào trang quản lý.</p>
+    <label for="passwordInput">Mật khẩu</label>
+    <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu">
+    <div style="margin-top: 12px;">
+      <button id="loginBtn" type="button">Vào</button>
+    </div>
+    <div id="loginError" class="error"></div>
+  </div>
+  <div id="dashboard" hidden>
+    <p class="muted" id="statusLine">Đang tải dữ liệu...</p>
+    <section class="card" aria-label="Suc khoe stack">
+      <h2>(a) Sức khỏe stack</h2>
+      <div class="grid" id="services"></div>
+      <p class="muted" id="updatedAt">Cập nhật: chưa có dữ liệu</p>
+    </section>
+    <section class="card" aria-label="Cong viec">
+      <h2>(b) Công việc</h2>
+      <div id="tasks"><p class="muted">Chưa có công việc đang chạy.</p></div>
+    </section>
+    <section class="card" aria-label="Token">
+      <h2>(c) Token</h2>
+      <div class="tokens">
+        <div class="token-box">
+          <div class="muted">Tài khoản chính</div>
+          <div class="value" id="tokenMain">—</div>
+          <div class="muted" id="tokenMainSub"></div>
+        </div>
+        <div class="token-box">
+          <div class="muted">Tài khoản worker</div>
+          <div class="value" id="tokenWorker">—</div>
+          <div class="muted" id="tokenWorkerSub"></div>
+        </div>
+      </div>
+    </section>
+    <section class="card" aria-label="Ra lenh">
+      <h2>(d) Ra lệnh / trò chuyện</h2>
+      <div class="cmd-row">
+        <input id="commandInput" type="text" placeholder="Nhập lệnh, ví dụ: kiểm tra stack" maxlength="500">
+        <button id="sendBtn" type="button">Gửi</button>
+      </div>
+      <div id="sendMsg" class="ok"></div>
+      <div id="commands" style="margin-top: 12px;"></div>
+    </section>
+  </div>
+</main>
+<script>
+const SUPABASE_URL = "https://yuafwbuhwdhitktqucib.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1YWZ3YnVod2RoaXRrdHF1Y2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NTQ5NjMsImV4cCI6MjEwODEzMDk2M30.TEwH0o8L4sCJuZH9WvkzcgxXHRsirqWr4DJUB_HgkBw";
+const HASH = "0c9b50423177ba9d04b037326996218bb4409bdc9c0464884dc005c929c04968";
+const SERVICE_NAMES = ["postgres", "redis", "mock", "broker", "dashboard", "litellm"];
+const POLL_MS = 30000;
+let pollTimer = null;
+const $ = (id) => document.getElementById(id);
+const loginBox = $("loginBox");
+const dashboard = $("dashboard");
+const logoutBtn = $("logoutBtn");
+const loginBtn = $("loginBtn");
+const passwordInput = $("passwordInput");
+const loginError = $("loginError");
+const statusLine = $("statusLine");
+const servicesEl = $("services");
+const updatedAtEl = $("updatedAt");
+const tasksEl = $("tasks");
+const tokenMainEl = $("tokenMain");
+const tokenMainSub = $("tokenMainSub");
+const tokenWorkerEl = $("tokenWorker");
+const tokenWorkerSub = $("tokenWorkerSub");
+const commandInput = $("commandInput");
+const sendBtn = $("sendBtn");
+const sendMsg = $("sendMsg");
+const commandsEl = $("commands");
+function supabaseConfigured() {
+  return SUPABASE_URL !== "" && SUPABASE_ANON_KEY !== "";
+}
+function supabaseHeaders() {
+  return {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  };
+}
+async function sha256Hex(text) {
+  if (!window.crypto || !window.crypto.subtle) {
+    throw new Error("Trình duyệt không hỗ trợ crypto.subtle (cần mở bằng HTTPS).");
+  }
+  const data = new TextEncoder().encode(text);
+  const buf = await window.crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+function showDashboard() {
+  loginBox.hidden = true;
+  dashboard.hidden = false;
+  logoutBtn.hidden = false;
+  loadAll();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(loadAll, POLL_MS);
+}
+function showLogin() {
+  dashboard.hidden = true;
+  loginBox.hidden = false;
+  logoutBtn.hidden = true;
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  passwordInput.value = "";
+  loginError.textContent = "";
+}
+async function doLogin() {
+  loginError.textContent = "";
+  const pw = passwordInput.value;
+  if (!pw) {
+    loginError.textContent = "Vui lòng nhập mật khẩu.";
+    return;
+  }
+  if (!HASH) {
+    loginError.textContent = "Chưa cấu hình HASH, nhờ Tiểu Khôi điền HASH vào file.";
+    return;
+  }
+  loginBtn.disabled = true;
+  try {
+    const hex = await sha256Hex(pw);
+    if (hex === HASH.toLowerCase()) {
+      try { sessionStorage.setItem("tbk_logged_in", "1"); } catch (e) {}
+      showDashboard();
+    } else {
+      loginError.textContent = "Sai mật khẩu.";
+    }
+  } catch (e) {
+    loginError.textContent = "Không kiểm tra được mật khẩu: " + e.message;
+  } finally {
+    loginBtn.disabled = false;
+  }
+}
+function fmtTime(v) {
+  if (!v) return "chưa có dữ liệu";
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+  return d.toLocaleString("vi-VN");
+}
+function renderServices(services, updatedAt) {
+  servicesEl.textContent = "";
+  SERVICE_NAMES.forEach((name) => {
+    const raw = services ? services[name] : undefined;
+    const status = raw ? String(raw).toUpperCase() : "UNKNOWN";
+    const box = document.createElement("div");
+    box.className = "service";
+    const n = document.createElement("div");
+    n.className = "name";
+    n.textContent = name;
+    const b = document.createElement("span");
+    b.className = "badge " + (status === "UP" ? "up" : status === "DOWN" ? "down" : "unknown");
+    b.textContent = status === "UNKNOWN" ? "—" : status;
+    box.appendChild(n);
+    box.appendChild(b);
+    servicesEl.appendChild(box);
+  });
+  updatedAtEl.textContent = "Cập nhật: " + fmtTime(updatedAt);
+}
+function renderTasks(tasks) {
+  tasksEl.textContent = "";
+  if (!tasks || tasks.length === 0) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "Chưa có công việc đang chạy.";
+    tasksEl.appendChild(p);
+    return;
+  }
+  tasks.forEach((t) => {
+    const name = t && t.name ? String(t.name) : "Công việc";
+    const progress = t && typeof t.progress === "number" ? Math.max(0, Math.min(100, t.progress)) : 0;
+    const status = t && t.status ? String(t.status) : "";
+    const wrap = document.createElement("div");
+    wrap.className = "task";
+    const row = document.createElement("div");
+    row.className = "row";
+    const left = document.createElement("span");
+    left.textContent = name + (status ? " - " + status : "");
+    const right = document.createElement("span");
+    right.textContent = progress + "%";
+    row.appendChild(left);
+    row.appendChild(right);
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    const fill = document.createElement("div");
+    fill.style.width = progress + "%";
+    bar.appendChild(fill);
+    wrap.appendChild(row);
+    wrap.appendChild(bar);
+    tasksEl.appendChild(wrap);
+  });
+}
+function tokenText(v) {
+  if (v === undefined || v === null || v === "") return "—";
+  if (typeof v === "object") {
+    if (v.left !== undefined && v.left !== "") return String(v.left);
+    if (v.balance !== undefined && v.balance !== "") return String(v.balance);
+    if (v.used_percent !== undefined) return "Đã dùng " + v.used_percent + "%";
+    return "—";
+  }
+  return String(v);
+}
+function tokenSub(v) {
+  if (v && typeof v === "object" && v.used_percent !== undefined) {
+    return "Đã dùng " + v.used_percent + "%";
+  }
+  return "";
+}
+function renderTokens(tokens) {
+  const main = tokens ? tokens.main : undefined;
+  const worker = tokens ? tokens.worker : undefined;
+  tokenMainEl.textContent = tokenText(main);
+  tokenMainSub.textContent = tokenSub(main);
+  tokenWorkerEl.textContent = tokenText(worker);
+  tokenWorkerSub.textContent = tokenSub(worker);
+}
+async function loadStatus() {
+  if (!supabaseConfigured()) {
+    statusLine.textContent = "Chưa cấu hình Supabase, nhờ Tiểu Khôi điền SUPABASE_URL và SUPABASE_ANON_KEY.";
+    renderServices(null, null);
+    renderTasks([]);
+    renderTokens(null);
+    return;
+  }
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/dashboard_status?id=eq.1&select=payload,updated_at", { headers: supabaseHeaders() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    if (!rows || rows.length === 0) {
+      statusLine.textContent = "Chưa có dữ liệu trong bảng dashboard_status (id=1).";
+      renderServices(null, null);
+      renderTasks([]);
+      renderTokens(null);
+      return;
+    }
+    const payload = rows[0].payload || {};
+    const updatedAt = payload.updated_at || rows[0].updated_at;
+    renderServices(payload.services || {}, updatedAt);
+    renderTasks(payload.tasks || []);
+    renderTokens(payload.tokens || null);
+    statusLine.textContent = "Đã tải lúc " + new Date().toLocaleString("vi-VN") + " - tự làm mới mỗi 30 giây.";
+  } catch (e) {
+    statusLine.textContent = "Không tải được dữ liệu: " + e.message;
+  }
+}
+async function loadCommands() {
+  if (!supabaseConfigured()) return;
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/dashboard_commands?select=id,command,status,reply,created_at&order=created_at.desc&limit=20", { headers: supabaseHeaders() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    commandsEl.textContent = "";
+    if (!rows || rows.length === 0) {
+      const p = document.createElement("p");
+      p.className = "muted";
+      p.textContent = "Chưa có lệnh nào.";
+      commandsEl.appendChild(p);
+      return;
+    }
+    rows.forEach((r) => {
+      const item = document.createElement("div");
+      item.className = "cmd-item";
+      const cmd = document.createElement("div");
+      cmd.textContent = r.command || "";
+      const meta = document.createElement("div");
+      meta.className = "cmd-meta";
+      meta.textContent = (r.status || "") + " - " + fmtTime(r.created_at);
+      item.appendChild(cmd);
+      item.appendChild(meta);
+      if (r.reply) {
+        const rep = document.createElement("div");
+        rep.className = "reply";
+        rep.textContent = r.reply;
+        item.appendChild(rep);
+      }
+      commandsEl.appendChild(item);
+    });
+  } catch (e) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "Không tải được lệnh: " + e.message;
+    commandsEl.textContent = "";
+    commandsEl.appendChild(p);
+  }
+}
+async function loadAll() {
+  await loadStatus();
+  await loadCommands();
+}
+async function sendCommand() {
+  sendMsg.textContent = "";
+  const text = commandInput.value.trim();
+  if (!text) {
+    sendMsg.textContent = "Vui lòng nhập lệnh.";
+    return;
+  }
+  if (!supabaseConfigured()) {
+    sendMsg.textContent = "Chưa cấu hình Supabase.";
+    return;
+  }
+  sendBtn.disabled = true;
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/dashboard_commands", {
+      method: "POST",
+      headers: Object.assign({}, supabaseHeaders(), { "Prefer": "return=representation" }),
+      body: JSON.stringify({ command: text, status: "pending" })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    commandInput.value = "";
+    sendMsg.textContent = "Đã gửi lệnh, đang chờ xử lý.";
+    await loadCommands();
+  } catch (e) {
+    sendMsg.textContent = "Gửi lệnh thất bại: " + e.message;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+loginBtn.addEventListener("click", doLogin);
+passwordInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+logoutBtn.addEventListener("click", () => {
+  try { sessionStorage.removeItem("tbk_logged_in"); } catch (e) {}
+  showLogin();
+});
+sendBtn.addEventListener("click", sendCommand);
+commandInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendCommand(); });
+try {
+  if (sessionStorage.getItem("tbk_logged_in") === "1" && HASH) showDashboard();
+} catch (e) {}
+</script>
+</body>
+</html>
