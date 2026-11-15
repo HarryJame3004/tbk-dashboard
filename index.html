@@ -177,8 +177,9 @@ async function loadHealth(){
       const p = j[0].payload;
       const svcs = p.services || {};
       const names = Object.keys(svcs);
-      const up = names.filter(n=>svcs[n]==="up"||svcs[n]===true).length;
-      document.getElementById("health").innerHTML = names.map(n=>`<div class="hitem"><b>${n}</b><span class="pill ${svcs[n]==="up"||svcs[n]===true?"up":"down"}">${svcs[n]==="up"||svcs[n]===true?"UP":"DOWN"}</span></div>`).join("");
+      const isUp = v => String(v).toUpperCase() === "UP" || v === true;
+      const up = names.filter(n=>isUp(svcs[n])).length;
+      document.getElementById("health").innerHTML = names.map(n=>`<div class="hitem"><b>${n}</b><span class="pill ${isUp(svcs[n])?"up":"down"}">${isUp(svcs[n])?"UP":"DOWN"}</span></div>`).join("");
       document.getElementById("healthTime").textContent = "Cập nhật: " + (p.updated_at || j[0].updated_at || "");
       document.getElementById("stStack").textContent = up + "/" + names.length + " UP";
       const running = (p.tasks||[]).filter(t=>t.status==="running").length;
