@@ -26,6 +26,7 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
 .badge.on{background:#dcfce7;color:#166534}
 .badge.off{background:#fee2e2;color:#991b1b}
 .badge.idle{background:#fef9c3;color:#854d0e}
+.badge.unknown{background:#e2e8f0;color:#475569}
 .tokens{font-size:14px;margin-top:8px}
 .tokens b{color:#0f172a;font-size:16px}
 .tokens span{color:#64748b;font-size:12px}
@@ -78,7 +79,7 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
 <div class="wrap">
 
   <div class="stats">
-    <div class="stat"><b id="stTotal">—</b><span>Tổng token còn lại</span></div>
+    <div class="stat"><b id="stTotal">—</b><span>Tổng kho token</span></div>
     <div class="stat"><b id="stOnline">—</b><span>AI đang hoạt động</span></div>
     <div class="stat"><b id="stTasks">—</b><span>Việc đang chạy</span></div>
     <div class="stat"><b id="stStack">—</b><span>Stack</span></div>
@@ -103,7 +104,7 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
     </div>
     <div id="cmdList" style="margin-top:10px;font-size:13px;color:#334155">Chưa có lệnh nào.</div>
   </div>
-  <p class="note">Số token là số lượng còn lại theo lần kiểm tra gần nhất, không phải số đo trực tiếp theo thời gian thực. Tiểu Khôi cập nhật khi có thay đổi.</p>
+  <p class="note">Số token là quy mô kho token đã biết (Tiểu Khôi ~6,3 tỷ, Tiểu Tiểu Khôi 30 tỷ) — không phải số còn lại theo thời gian thực, vì chưa có API đo trực tiếp. Trạng thái, công việc và tiến độ lấy từ Supabase, cập nhật mỗi 60 giây.</p>
 </div>
 </div>
 
@@ -111,13 +112,20 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
 const HASH = "eb8e1a3c7ce1d6bb9f255052b1bc9c4336504bf22282493439e7416bf6641444";
 const SUPABASE_URL = "https://yuafwbuhwdhitktqucib.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1YWZ3YnVod2RoaXRrdHF1Y2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NTQ5NjMsImV4cCI6MjEwODEzMDk2M30.TEwH0o8L4sCJuZH9WvkzcgxXHRsirqWr4DJUB_HgkBw";
+// Danh sách AI: chỉ giữ thông tin CỐ ĐỊNH (tên, vai trò, ghi chú).
+// Mọi số liệu động (trạng thái, việc đang làm, tiến độ, token) lấy từ
+// payload Supabase (dashboard_status) do dashboard-sync.sh ghi mỗi 60s.
+// Nếu payload chưa có dữ liệu thật thì thẻ hiện "Chưa có dữ liệu",
+// KHÔNG dùng số ghi cứng.
 const AIS = [
- {id:"tieukhoi", name:"Tiểu Khôi", role:"Tổng chỉ huy — điều phối, giám sát, báo cáo", tokens:"~6,3 tỷ", tokensNum:6.3, unit:"tỷ", status:"on", statusText:"Đang hoạt động", task:"Đang làm: đổi DNS recevtno.site qua Cloudflare + build lại bảng quản lý này", progress:70, done:"Đã xong hôm nay: đăng nhập Tenten, tạo bảng Supabase, deploy dashboard lên Vercel, đổi mật khẩu dashboard thành 090909, đăng nhập Cloudflare bằng Brave.", note:"Tài khoản chính của sếp lớn. Dùng token chính."},
- {id:"worker", name:"Tiểu Tiểu Khôi", role:"Công ty con — viết code, kiểm tra, test, báo cáo", tokens:"30 tỷ", tokensNum:30, unit:"tỷ", status:"on", statusText:"Đang hoạt động", task:"Đang làm: chờ giao việc mới (vừa xong 3 việc lớn)", progress:100, done:"Đã xong hôm nay: bot Telegram v2, audit toàn hệ thống + bản sửa B1/B2/B3, code dashboard P1/P2.", note:"Tài khoản mua 72.000đ, bảo hành tới 21/11/2026. Dùng token của nó, không tốn token tài khoản chính."},
- {id:"claude", name:"Claude Code (Cụ Soi)", role:"Review code, kiểm tra chất lượng", tokens:"Pro — không tính token", tokensNum:null, unit:"", status:"idle", statusText:"Tạm nghỉ", task:"Đang nghỉ theo lệnh sếp lớn, Tiểu Khôi tự review thay.", progress:0, done:"—", note:"Gói Pro, hết hạn 07/12/2026."},
- {id:"codex", name:"Codex", role:"Viết code, sửa lỗi", tokens:"ChatGPT Plus — không tính token", tokensNum:null, unit:"", status:"idle", statusText:"Sẵn sàng", task:"Chưa có việc.", progress:0, done:"—", note:"Tài khoản 102240521@student.vgu.edu.vn."},
- {id:"antigravity", name:"Antigravity", role:"Viết code, sửa lỗi", tokens:"Google AI Pro — không tính token", tokensNum:null, unit:"", status:"idle", statusText:"Sẵn sàng", task:"Chưa có việc.", progress:0, done:"—", note:"2 tài khoản Google AI Pro: trankhoi0606 + khoima594."}
+ {id:"tieukhoi", name:"Tiểu Khôi", role:"Tổng chỉ huy — điều phối, giám sát, báo cáo", note:"Tài khoản chính của sếp lớn. Dùng token chính."},
+ {id:"worker", name:"Tiểu Tiểu Khôi", role:"Công ty con — viết code, kiểm tra, test, báo cáo", note:"Tài khoản mua 72.000đ, bảo hành tới 21/11/2026. Dùng token của nó, không tốn token tài khoản chính."},
+ {id:"claude", name:"Claude Code (Cụ Soi)", role:"Review code, kiểm tra chất lượng", note:"Gói Pro, hết hạn 07/12/2026."},
+ {id:"codex", name:"Codex", role:"Viết code, sửa lỗi", note:"Tài khoản 102240521@student.vgu.edu.vn."},
+ {id:"antigravity", name:"Antigravity", role:"Viết code, sửa lỗi", note:"2 tài khoản Google AI Pro: trankhoi0606 + khoima594."}
 ];
+let liveAI = null;       // payload.ai tu Supabase (null = chua co du lieu that)
+let livePipeline = null; // payload.pipeline tu Supabase
 let filter = "all";
 function sha256(s){return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""))}
 async function doLogin(){
@@ -142,28 +150,48 @@ function renderTabs(){
   document.getElementById("tabs").innerHTML = tabs.map(t=>`<div class="tab${filter===t.id?" active":""}" onclick="setFilter('${t.id}')">${t.label}</div>`).join("");
 }
 function setFilter(id){ filter = id; renderTabs(); renderAI(); }
+function liveEntry(id){
+  if(!liveAI) return null;
+  const e = liveAI.find(x=>x.id===id);
+  return e || null;
+}
 function renderAI(){
   const list = filter === "all" ? AIS : AIS.filter(a=>a.id===filter);
-  document.getElementById("aiList").innerHTML = list.map(a=>`
+  document.getElementById("aiList").innerHTML = list.map(a=>{
+    const live = liveEntry(a.id);
+    const status = live ? live.status : "unknown";
+    const statusText = live ? live.statusText : "Chưa có dữ liệu";
+    const task = live ? live.task : "Chưa có dữ liệu";
+    const progress = live ? (live.progress||0) : 0;
+    const tokens = live ? live.tokens : "—";
+    const tokensNum = live ? live.tokensNum : null;
+    const unit = live ? (live.unit||"") : "";
+    const done = live ? (live.done||"—") : "—";
+    return `
     <div class="card" onclick="toggleDetail('${a.id}')">
-      <div class="top"><div><div class="name">${a.name}</div><div class="role">${a.role}</div></div><span class="badge ${a.status}">${a.statusText}</span></div>
-      <div class="tokens">Token còn lại: <b>${a.tokens}</b> ${a.tokensNum?`<span>(~${a.tokensNum} ${a.unit})</span>`:""}</div>
-      <div class="bar"><i style="width:${a.progress}%"></i></div>
-      <div class="prow"><span>Tiến độ công việc hiện tại</span><span>${a.progress}%</span></div>
-      <div class="task">📌 <b>Đang làm:</b> ${a.task}</div>
+      <div class="top"><div><div class="name">${a.name}</div><div class="role">${a.role}</div></div><span class="badge ${status}">${statusText}</span></div>
+      <div class="tokens">Kho token: <b>${tokens}</b> ${tokensNum?`<span>(~${tokensNum} ${unit})</span>`:""}</div>
+      <div class="bar"><i style="width:${progress}%"></i></div>
+      <div class="prow"><span>Tiến độ công việc hiện tại</span><span>${progress}%</span></div>
+      <div class="task">📌 <b>Đang làm:</b> ${task}</div>
       <div class="detail" id="d-${a.id}">
         <div class="row"><span>Vai trò</span><span>${a.role}</span></div>
-        <div class="row"><span>Token còn lại</span><span><b>${a.tokens}</b></span></div>
-        <div class="row"><span>Trạng thái</span><span>${a.statusText}</span></div>
-        <div class="row"><span>Đang làm</span><span>${a.task}</span></div>
-        <div class="row"><span>Tiến độ</span><span>${a.progress}%</span></div>
-        <div class="row"><span>Đã xong hôm nay</span><span>${a.done}</span></div>
+        <div class="row"><span>Kho token</span><span><b>${tokens}</b></span></div>
+        <div class="row"><span>Trạng thái</span><span>${statusText}</span></div>
+        <div class="row"><span>Đang làm</span><span>${task}</span></div>
+        <div class="row"><span>Tiến độ</span><span>${progress}%</span></div>
+        <div class="row"><span>Đã xong gần đây</span><span>${done}</span></div>
         <div class="row"><span>Ghi chú</span><span>${a.note}</span></div>
       </div>
-    </div>`).join("");
-  const total = AIS.reduce((s,a)=>s+(a.tokensNum||0),0);
-  document.getElementById("stTotal").textContent = "~" + total.toFixed(1) + " tỷ";
-  document.getElementById("stOnline").textContent = AIS.filter(a=>a.status==="on").length + "/" + AIS.length;
+    </div>`;}).join("");
+  if(liveAI){
+    const total = liveAI.reduce((s,x)=>s+(x.tokensNum||0),0);
+    document.getElementById("stTotal").textContent = total>0 ? "~" + total.toFixed(1) + " tỷ" : "—";
+    document.getElementById("stOnline").textContent = liveAI.filter(x=>x.status==="on").length + "/" + liveAI.length;
+  } else {
+    document.getElementById("stTotal").textContent = "—";
+    document.getElementById("stOnline").textContent = "—";
+  }
 }
 function toggleDetail(id){
   const el = document.getElementById("d-"+id);
@@ -182,18 +210,37 @@ async function loadHealth(){
       document.getElementById("health").innerHTML = names.map(n=>`<div class="hitem"><b>${n}</b><span class="pill ${isUp(svcs[n])?"up":"down"}">${isUp(svcs[n])?"UP":"DOWN"}</span></div>`).join("");
       document.getElementById("healthTime").textContent = "Cập nhật: " + (p.updated_at || j[0].updated_at || "");
       document.getElementById("stStack").textContent = up + "/" + names.length + " UP";
-      const running = (p.tasks||[]).filter(t=>t.status==="running").length;
-      document.getElementById("stTasks").textContent = running;
-      renderTasks(p.tasks||[]);
+      liveAI = Array.isArray(p.ai) && p.ai.length ? p.ai : null;
+      livePipeline = p.pipeline || null;
+      renderAI();
+      const c = livePipeline && livePipeline.counts ? livePipeline.counts : null;
+      document.getElementById("stTasks").textContent = c ? (c.dang_lam||0) : "—";
+      renderTasks(livePipeline);
       return;
     }
   }catch(e){}
   document.getElementById("health").innerHTML = "<div class='hitem'><b>Chưa có dữ liệu</b></div>";
 }
-function renderTasks(tasks){
+const STATE_LABEL = {moi:"Mới", dang_lam:"Đang làm", cho_duyet:"Chờ duyệt", xong:"Xong", that_bai:"Thất bại", dung:"Dừng"};
+function renderTasks(pipe){
   const el = document.getElementById("tasks");
-  if(!tasks || !tasks.length){ el.innerHTML = "<div class='card' style='cursor:default'>Chưa có công việc đang chạy.</div>"; return; }
-  el.innerHTML = tasks.map(t=>`<div class="card" style="cursor:default"><div class="top"><div class="name" style="font-size:14px">${t.name||t.title||"Công việc"}</div><span class="badge ${t.status==="running"?"on":"idle"}">${t.status||""}</span></div><div class="bar"><i style="width:${t.progress||0}%"></i></div><div class="prow"><span>${t.owner||""}</span><span>${t.progress||0}%</span></div></div>`).join("");
+  if(!pipe || !pipe.counts){
+    el.innerHTML = "<div class='card' style='cursor:default'>Chưa có dữ liệu pipeline.</div>";
+    return;
+  }
+  const c = pipe.counts;
+  const countsLine = `<div class="card" style="cursor:default;font-size:13px;color:#334155">Mới: <b>${c.moi||0}</b> &nbsp;•&nbsp; Đang làm: <b>${c.dang_lam||0}</b> &nbsp;•&nbsp; Chờ duyệt: <b>${c.cho_duyet||0}</b> &nbsp;•&nbsp; Xong: <b>${c.xong||0}</b> &nbsp;•&nbsp; Thất bại: <b>${c.that_bai||0}</b> &nbsp;•&nbsp; Dừng: <b>${c.dung||0}</b> &nbsp;•&nbsp; Gate: <b>${pipe.gate_runs?pipe.gate_runs.dat||0:0} đạt / ${pipe.gate_runs?pipe.gate_runs.truot||0:0} trượt</b> &nbsp;•&nbsp; Bug mở: <b>${pipe.bugs_open||0}</b></div>`;
+  const tasks = pipe.recent_tasks || [];
+  if(!tasks.length){
+    el.innerHTML = countsLine + "<div class='card' style='cursor:default'>Chưa có công việc nào trong bảng tasks.</div>";
+    return;
+  }
+  el.innerHTML = countsLine + tasks.map(t=>{
+    const prog = Math.max(0, Math.min(100, Math.round((t.buoc||0)*100/8)));
+    const badge = t.trang_thai==="xong" ? "on" : (t.trang_thai==="that_bai" ? "off" : "idle");
+    const label = STATE_LABEL[t.trang_thai] || t.trang_thai;
+    return `<div class="card" style="cursor:default"><div class="top"><div class="name" style="font-size:14px">${(t.tieu_de||"Công việc").replace(/</g,"&lt;")}</div><span class="badge ${badge}">${label}</span></div><div class="bar"><i style="width:${prog}%"></i></div><div class="prow"><span>${(t.nguoi_lam||"").replace(/</g,"&lt;")}${t.cap?" • Cấp "+t.cap:""}</span><span>Bước ${t.buoc||0}/8 • ${prog}%</span></div></div>`;
+  }).join("");
 }
 async function loadTasks(){}
 async function sendCmd(){
