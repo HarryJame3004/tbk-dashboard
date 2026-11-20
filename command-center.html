@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trung tâm điều khiển TBK — BẢN DEMO</title>
 <style>
-:root{--cy:#22d3ee;--gr:#4ade80;--bg:#050b14;--panel:rgba(8,20,34,.88);--mute:#64748b;--txt:#e2e8f0}
+:root{--cy:#22d3ee;--gr:#4ade80;--bg:#050b14;--panel:rgba(8,20,34,.88);--mute:#64748b;--txt:#e2e8f0;--red:#f87171;--gold:#facc15}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 body{background-image:radial-gradient(ellipse at 50% 35%,#0b2233 0%,var(--bg) 70%);padding-bottom:24px}
@@ -20,43 +20,69 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 .controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
 .btn{font:inherit;font-size:13px;font-weight:700;color:#06202b;background:var(--cy);border:1px solid var(--cy);border-radius:8px;padding:9px 14px;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--cy)}
+.btn.danger{background:transparent;color:#fca5a5;border-color:var(--red)}
 .btn:hover{filter:brightness(1.1)}
 .sum{font-size:12px;color:var(--mute);margin-top:8px}
 
 /* Sân khấu: desktop dùng toạ độ % (absolute), mobile xếp lưới */
-#stage{position:relative;width:min(1100px,100%);height:640px;margin:4px auto 0}
+#stage{position:relative;width:min(1100px,100%);height:990px;margin:4px auto 0}
 #svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}
 .link{fill:none;stroke:rgba(34,211,238,.28);stroke-width:1.5;stroke-dasharray:4 8;animation:flow 1.6s linear infinite}
 .link.off{stroke:rgba(100,116,139,.22);animation:none}
 .link.hot{stroke:rgba(74,222,128,.85);stroke-width:2.2}
+.link.hot.err{stroke:rgba(248,113,113,.9)}
 @keyframes flow{to{stroke-dashoffset:-24}}
 .dot{fill:var(--cy)}
 .dot.hot{fill:var(--gr)}
+.dot.hot.err{fill:var(--red)}
 .pkt{fill:#fff}
+.pkt.err{fill:var(--red)}
 .lane{fill:none;stroke:var(--gr);stroke-width:2;opacity:0;transition:opacity .4s}
 .lane.show{opacity:1}
+.lane.err{stroke:var(--red)}
+@keyframes jolt{0%,100%{translate:0 0}25%{translate:-4px 0}75%{translate:4px 0}}
 
 /* Hub nhiệm vụ ở giữa */
-#hub{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:300px;z-index:3;background:rgba(6,18,30,.93);border:1px solid rgba(34,211,238,.5);border-radius:18px;padding:14px;box-shadow:0 0 40px rgba(34,211,238,.18)}
+#hub{position:absolute;left:50%;top:63.64%;transform:translate(-50%,-50%);width:310px;z-index:3;background:rgba(6,18,30,.93);border:1px solid rgba(34,211,238,.5);border-radius:18px;padding:14px;box-shadow:0 0 40px rgba(34,211,238,.18)}
 #hub h2{font-size:13px;letter-spacing:.14em;color:var(--cy);text-align:center}
 #hub h2 small{display:block;color:var(--mute);letter-spacing:0;font-weight:400;font-size:11px;margin-top:3px}
-.task{display:block;width:100%;text-align:left;font:inherit;color:var(--txt);background:#0b1f2e;border:1px solid #164e63;border-radius:10px;padding:9px 10px;margin-top:8px;cursor:pointer}
+.task{display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--txt);background:#0b1f2e;border:1px solid #164e63;border-radius:10px;padding:9px 10px;margin-top:8px;cursor:pointer}
 .task:hover{border-color:var(--cy)}
-.task .tt{display:block;font-weight:700;font-size:13px}
-.task .tm{display:block;font-size:11px;color:var(--mute);margin-top:2px;line-height:1.35}
-.task .st{display:inline-block;margin-top:5px;font-size:11px;padding:2px 8px;border-radius:20px;background:#1e293b;color:#cbd5e1}
+.task .tt{font-weight:700;font-size:13px}
+.task .tm{grid-column:1/-1;display:block;font-size:11px;color:var(--mute);margin-top:3px;line-height:1.35}
+.task .st{font-size:11px;padding:2px 8px;border-radius:20px;background:#1e293b;color:#cbd5e1;white-space:nowrap}
 .task.running .st{background:rgba(34,211,238,.18);color:var(--cy)}
 .task.done .st{background:rgba(74,222,128,.15);color:var(--gr)}
+/* Task lỗi: viền đỏ, huy hiệu LỖI */
+.task.error{border-color:var(--red);background:#2a0f14;box-shadow:0 0 14px rgba(248,113,113,.3)}
+.task.error .tt{color:#fecaca}
+.task.error .st{background:rgba(248,113,113,.2);color:#fca5a5;font-weight:700}
+.task.jolt{animation:jolt .5s linear 3}
 
-/* Node AI */
+/* Node AI (và Sếp lớn, Tiểu Khôi) */
 .node{position:absolute;transform:translate(-50%,-50%);width:170px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 10px 10px;font:inherit;color:var(--txt);text-align:center;cursor:pointer;background:var(--panel);border:1px solid rgba(34,211,238,.35);border-radius:14px;box-shadow:0 0 18px rgba(34,211,238,.12);transition:border-color .3s,box-shadow .3s}
 .node:hover{border-color:var(--cy)}
 .node .ring{position:absolute;top:34px;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px solid var(--gr);opacity:0;pointer-events:none}
 .node.active .ring{animation:pulse 2.6s ease-out infinite}
+/* Sếp lớn: khối gọn, không có dòng việc */
+.node.boss{width:200px;padding-top:10px}
+.node.boss .doing,.node.boss .bar{display:none}
+/* Tiểu Khôi: viền vàng, nhãn chỉ huy, vòng vàng nhấp nháy */
+.node.lead{border:2px solid var(--gold);box-shadow:0 0 26px rgba(250,204,21,.4)}
+.node.lead .ava{background:linear-gradient(135deg,#a16207,#facc15);color:#1c1917}
+.node.lead .nm{color:#fde68a}
+.node.lead:not(.working) .ring{border-color:var(--gold);animation:pulse 1.8s ease-out infinite}
+.you{position:absolute;top:-27px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:800;letter-spacing:.05em;color:#1c1917;background:var(--gold);padding:3px 9px;border-radius:6px;box-shadow:0 0 12px rgba(250,204,21,.6);pointer-events:none}
 .node.working{border-color:var(--gr);box-shadow:0 0 28px rgba(74,222,128,.45)}
 .node.working .ring{animation:pulse .8s ease-out infinite;border-color:var(--cy)}
 @keyframes pulse{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.5);opacity:0}}
 .node.paused{opacity:.5;filter:grayscale(.7)}
+/* Node lỗi: viền đỏ nhấp nháy + rung nhẹ */
+@keyframes errblink{0%,100%{box-shadow:0 0 10px rgba(248,113,113,.25)}50%{box-shadow:0 0 30px rgba(248,113,113,.9)}}
+.node.err{border-color:var(--red);animation:errblink 1s ease-in-out infinite,jolt .5s linear 3}
+.node.err .ava{background:#7f1d1d}
+.node.err .ring{border-color:var(--red);animation:pulse .9s ease-out infinite}
+.node.err .stt{color:#fca5a5}
 .ava{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#ecfeff;background:linear-gradient(135deg,#0e7490,#15803d)}
 .node.paused .ava{background:#334155}
 .nm{font-weight:700;font-size:14px;margin-top:4px}
@@ -67,9 +93,22 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 .bar{width:100%;height:4px;background:#0f2a3a;border-radius:4px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--gr))}
 
+/* Node tổ (nhỏ): dùng cho Tổ Trực Telegram, Tổ Quản lý key free và 7 tổ trong cụm */
+.tnode{position:absolute;transform:translate(-50%,-50%);width:150px;z-index:3;display:flex;flex-direction:column;gap:2px;padding:7px 9px;font:inherit;color:var(--txt);text-align:left;cursor:pointer;background:var(--panel);border:1px solid rgba(125,211,252,.35);border-radius:10px;transition:border-color .3s}
+.tnode:hover{border-color:var(--cy)}
+.tnode .tn{font-weight:700;font-size:12px;line-height:1.25}
+.tnode .tr{font-size:10.5px;color:#7dd3fc;line-height:1.3}
+
+/* Cụm 7 tổ của Tiểu Tiểu Khôi Intelligence */
+.cluster{position:absolute;transform:translate(-50%,-50%);width:350px;z-index:3;background:rgba(6,18,30,.7);border:1px dashed rgba(34,211,238,.35);border-radius:14px;padding:10px}
+.cluster .ch{font-size:11px;color:#7dd3fc;text-align:center;margin-bottom:8px;letter-spacing:.02em}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cgrid .tnode{position:relative;transform:none;width:auto}
+
 /* Phòng */
 .room{position:absolute;transform:translate(-50%,-50%);width:200px;z-index:3;background:var(--panel);border:1px solid #155e75;border-radius:12px;padding:9px;transition:box-shadow .4s,border-color .4s}
 .room.lit{border-color:var(--gr);box-shadow:0 0 28px rgba(74,222,128,.5)}
+.room.err{border-color:var(--red);box-shadow:0 0 28px rgba(248,113,113,.5)}
 .room .rh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
 .room .nm2{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .room .ico{display:inline-grid;place-items:center;min-width:26px;height:20px;padding:0 4px;border-radius:5px;background:#0e7490;color:#ecfeff;font-size:10px}
@@ -77,10 +116,12 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 .room.has .cnt{color:var(--gr)}
 .room .chips{margin-top:6px;display:flex;flex-direction:column;gap:3px;min-height:18px}
 .chip{font-size:10.5px;background:rgba(74,222,128,.12);color:#bbf7d0;border-radius:5px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.err{background:rgba(248,113,113,.15);color:#fecaca}
 
 /* Nhãn bay từ node sang phòng */
-#flyer{position:absolute;z-index:5;transform:translate(-50%,-50%);background:var(--gr);color:#052e16;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .3s;box-shadow:0 0 16px var(--gr)}
+#flyer{position:absolute;z-index:5;transform:translate(-50%,-50%);background:var(--gr);color:#052e16;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .3s,background .3s;box-shadow:0 0 16px var(--gr)}
 #flyer.show{opacity:1}
+#flyer.err{background:var(--red);color:#450a0a;box-shadow:0 0 16px var(--red)}
 
 /* Bảng chi tiết node */
 #detail{position:fixed;right:16px;bottom:16px;width:280px;z-index:20;background:#071a28;border:1px solid var(--cy);border-radius:14px;padding:14px;box-shadow:0 0 30px rgba(34,211,238,.25);font-size:13px}
@@ -97,16 +138,24 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .foot{text-align:center;font-size:11px;color:var(--mute);margin-top:10px;padding:0 12px}
 
-/* Điện thoại: node, phòng xếp lưới; dây nối vẫn tính theo vị trí DOM thật */
+/* Điện thoại: mọi thứ xếp lưới; dây nối vẫn tính theo vị trí DOM thật */
 @media (max-width:760px){
-  #stage{height:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 10px 16px}
-  #hub{position:relative;left:auto;top:auto;transform:none;width:auto;grid-column:1/-1;order:0}
-  .node{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:1}
-  .room{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:2}
+  #stage{height:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:8px 10px 16px}
+  #stage>*{min-width:0}
+  #hub{position:relative;left:auto;top:auto;transform:none;width:auto;grid-column:1/-1;order:0;min-width:0}
+  .node,.tnode{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:1;min-width:0}
+  .node.boss{grid-column:1/-1;order:-1;width:auto}
+  .you{position:static;transform:none;display:block;margin-bottom:4px}
+  .cluster{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;grid-column:1/-1;order:1;min-width:0}
+  .room{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:2;min-width:0}
+  .room .rh{min-width:0}
+  .room .nm2{min-width:0}
+  .task{grid-template-columns:minmax(0,1fr) auto}
+  .task .tt{min-width:0;overflow-wrap:break-word}
   #detail{left:10px;right:10px;bottom:10px;width:auto}
 }
 @media (prefers-reduced-motion:reduce){
-  .node.active .ring,.node.working .ring,.link{animation:none!important}
+  .node.active .ring,.node.working .ring,.node.lead:not(.working) .ring,.node.err,.node.err .ring,.task.jolt,.link{animation:none!important}
 }
 </style>
 </head>
@@ -117,6 +166,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
   <span class="banner">BẢN DEMO — DỮ LIỆU MẪU, CHƯA NỐI DỮ LIỆU THẬT</span>
   <div class="controls">
     <button id="auto" class="btn">▶ Chạy demo tự động</button>
+    <button id="simerr" class="btn danger">⚠ Mô phỏng lỗi</button>
     <button id="reset" class="btn ghost">↺ Đặt lại</button>
   </div>
   <p id="sum" class="sum"></p>
@@ -131,6 +181,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
       </filter>
       <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
         <path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/>
+      </marker>
+      <marker id="arrow-err" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#f87171"/>
       </marker>
     </defs>
     <g id="links"></g>
@@ -151,13 +204,24 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 
 <script>
 // ===== Dữ liệu mẫu (DEMO, không phải dữ liệu thật) =====
+// kind: 'boss' = sếp lớn, 'ai' = AI (có dây nối từ hub), 'team' = tổ (chỉ bấm xem chi tiết)
 const NODES = {
-  khoi:   {name:'Tiểu Khôi',      role:'Tổng chỉ huy', state:'on',  ini:'TK',  doing:'Điều phối nhiệm vụ demo'},
-  tkhoi:  {name:'Tiểu Tiểu Khôi', role:'Phó giám đốc', state:'on',  ini:'TTK', doing:'Theo dõi thảo luận trial'},
-  de:     {name:'Tiểu Đệ',        role:'Tìm tin',      state:'on',  ini:'TĐ',  doing:'Tìm tin phục vụ demo'},
-  claude: {name:'Claude Code',    role:'Viết code',    state:'on',  ini:'CC',  doing:'Port Windows, OTP, SPEC 2'},
-  codex:  {name:'Codex',          role:'Viết code',    state:'off', ini:'CX',  doing:'Chưa nhận việc', reason:'đăng nhập hết hạn'},
-  anti:   {name:'Antigravity',    role:'Viết code',    state:'on',  ini:'AG',  doing:'Sẵn sàng nhận việc'}
+  boss:    {kind:'boss', name:'Trần Ngoc Minh Khôi', role:'Sếp lớn — Founder, chủ công ty', state:'on', ini:'TNK', doing:'Ra chủ đề và duyệt việc'},
+  khoi:    {kind:'ai', name:'Tiểu Khôi',      role:'Tổng chỉ huy', state:'on',  ini:'TK',  doing:'Điều phối nhiệm vụ demo'},
+  tkhoi:   {kind:'ai', name:'Tiểu Tiểu Khôi', role:'Phó giám đốc', state:'on',  ini:'TTK', doing:'Theo dõi thảo luận trial'},
+  de:      {kind:'ai', name:'Tiểu Đệ',        role:'Tìm tin',      state:'on',  ini:'TĐ',  doing:'Tìm tin phục vụ demo'},
+  claude:  {kind:'ai', name:'Claude Code',    role:'Viết code',    state:'on',  ini:'CC',  doing:'Port Windows, OTP, SPEC 2'},
+  codex:   {kind:'ai', name:'Codex',          role:'Viết code',    state:'off', ini:'CX',  doing:'Chưa nhận việc', reason:'đăng nhập hết hạn'},
+  anti:    {kind:'ai', name:'Antigravity',    role:'Viết code',    state:'on',  ini:'AG',  doing:'Sẵn sàng nhận việc'},
+  tg:      {kind:'team', name:'Tổ Trực Telegram',    role:'1 AI trực hàng đợi theo ca', state:'on', doing:'Trực hàng đợi Telegram, tin sếp không chờ quá 1 phút', parent:'Tiểu Khôi (chỉ đạo trực tiếp)'},
+  keyfree: {kind:'team', name:'Tổ Quản lý key free', role:'Probe 49 key free mỗi tuần', state:'on', doing:'Probe 49 key free mỗi tuần, báo key/model chết', parent:'Tiểu Tiểu Khôi (chỉ đạo)'},
+  arch:     {kind:'team', name:'Tổ Kiến trúc',  role:'Thiết kế, SPEC',                 state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  dev:      {kind:'team', name:'Tổ Viết code',  role:'Viết code',                      state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  review:   {kind:'team', name:'Tổ Kiểm tra',   role:'Review code',                    state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  test:     {kind:'team', name:'Tổ Test',       role:'Chạy test, gate',                state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  guard:    {kind:'team', name:'Tổ Bảo vệ',     role:'Bảo vệ thông tin · cửa cuối, chặn release', state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  dispatch: {kind:'team', name:'Tổ Điều phối',  role:'Chia việc, theo dõi tiến độ',    state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  scribe:   {kind:'team', name:'Tổ Ghi chép',   role:'Thư ký, ghi nhật ký L9',         state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'}
 };
 const ROOMS = {
   telegram:{name:'Phòng Telegram', ico:'TG'},
@@ -169,11 +233,17 @@ const TASKS = [
   {title:'Port Windows sang Supabase', short:'Port Windows', meta:'Draft PR #5 · xong code, chờ máy Windows thật', assign:['claude'], room:'code'},
   {title:'Sửa OTP nhảy số',            short:'Sửa OTP',      meta:'PR #70 · chờ review',                        assign:['claude'], room:'check'},
   {title:'SPEC 2 FALLBACK_TAG beta.5', short:'SPEC 2',       meta:'PR #69 · chờ duyệt merge',                   assign:['claude'], room:'telegram'},
-  {title:'Thảo luận FreeLLMAPI vs LiteLLM', short:'FreeLLMAPI vs LiteLLM', meta:'Phòng trial · chờ sếp ra chủ đề', assign:['khoi','tkhoi'], room:'trial'}
+  {title:'Thảo luận FreeLLMAPI vs LiteLLM', short:'FreeLLMAPI vs LiteLLM', meta:'Phòng trial · chờ sếp ra chủ đề', assign:['khoi','tkhoi'], room:'trial'},
+  {title:'Codex kiểm chứng số liệu LiteLLM', short:'Codex kiểm chứng', meta:'401 token_expired từ 19/11 — cần chạy codex login lại', assign:['codex'], room:'check', error:true}
 ];
-// Vị trí (%) trên sân khấu desktop
-const NODE_POS = {khoi:[22,16], tkhoi:[78,16], de:[9,44], claude:[91,44], codex:[22,68], anti:[78,68]};
-const ROOM_POS = {telegram:[14,90], trial:[38,90], code:[62,90], check:[86,90]};
+const ERR_IDX = TASKS.findIndex(t => t.error);
+// Vị trí (%) trên sân khấu desktop (sân 1100 x 990px)
+const NODE_POS = {
+  boss:[50,6.67], khoi:[50,24.85], tkhoi:[79.09,24.85], tg:[50,37.58], keyfree:[79.09,38.99],
+  de:[10,42.93], codex:[27.27,42.93], claude:[10,67.17], anti:[27.27,67.17]
+};
+const CLUSTER = {pos:[82.73,63.64], keys:['arch','dev','review','test','guard','dispatch','scribe']};
+const ROOM_POS = {telegram:[13.64,93.43], trial:[36.36,93.43], code:[63.64,93.43], check:[86.36,93.43]};
 
 // ===== Tiện ích =====
 const $ = s => document.querySelector(s);
@@ -182,7 +252,7 @@ const stage = $('#stage'), svg = $('#svg'), linkLayer = $('#links'), fx = $('#fx
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ref = id => document.getElementById(id);
 
-let busy = false, autoOn = false, doneCount = 0;
+let busy = false, autoOn = false, doneCount = 0, errCount = 0;
 const roomStats = {};
 const links = {}; // registry các đường nối: {el, a, aw, b, bw, len, dots, hot, ambient}
 
@@ -192,7 +262,16 @@ function anchor(el, where){
   const x = r.left - s.left, y = r.top - s.top;
   if(where === 'top') return {x: x + r.width/2, y};
   if(where === 'bottom') return {x: x + r.width/2, y: y + r.height};
+  if(where === 'left') return {x, y: y + r.height/2};
+  if(where === 'right') return {x: x + r.width, y: y + r.height/2};
   return {x: x + r.width/2, y: y + r.height/2};
+}
+// Chọn mép của `from` hướng về tâm `to` (theo trục lệch nhiều hơn)
+function sideToward(from, to){
+  const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+  const dx = (b.left + b.width/2) - (a.left + a.width/2), dy = (b.top + b.height/2) - (a.top + a.height/2);
+  if(Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'bottom' : 'top';
 }
 // Đường cong S: 'v' = dọc (cho đường node→phòng), 'auto' = theo hướng chính
 function curve(A, B, mode){
@@ -205,7 +284,8 @@ function curve(A, B, mode){
   return `M${A.x},${A.y} C${mx},${A.y} ${mx},${B.y} ${B.x},${B.y}`;
 }
 function layoutLink(L){
-  const A = anchor(ref(L.a), L.aw), B = anchor(ref(L.b), L.bw);
+  const aw = L.aw === 'toward' ? sideToward(ref(L.a), ref(L.b)) : L.aw;
+  const A = anchor(ref(L.a), aw), B = anchor(ref(L.b), L.bw);
   L.el.setAttribute('d', curve(A, B, L.mode));
   L.len = L.el.getTotalLength();
 }
@@ -233,32 +313,58 @@ function along(pathEl, dur, cb){
     requestAnimationFrame(step);
   });
 }
-function setHot(k, on){
+// Bật/tắt dây hub→node; err = true thì dây và gói đỏ
+function setHot(k, on, err){
   const L = links['amb-' + k];
   if(!L) return;
+  const red = on && !!err;
   L.hot = on;
   L.el.classList.toggle('hot', on);
-  L.dots.forEach(c => c.classList.toggle('hot', on));
+  L.el.classList.toggle('err', red);
+  L.dots.forEach(c => { c.classList.toggle('hot', on); c.classList.toggle('err', red); });
 }
 
 // ===== Dựng giao diện =====
-function buildNodes(){
-  for(const k in NODES){
-    const d = NODES[k], [x, y] = NODE_POS[k];
-    const b = document.createElement('button');
-    b.className = 'node ' + (d.state === 'on' ? 'active' : 'paused');
-    b.id = 'n-' + k;
-    b.style.left = x + '%'; b.style.top = y + '%';
-    b.innerHTML = `<span class="ring"></span>
+// Một node: AI/Sếp lớn dùng khung lớn, tổ dùng khung nhỏ (.tnode)
+function makeNode(k){
+  const d = NODES[k], b = document.createElement('button');
+  b.id = 'n-' + k;
+  if(d.kind === 'team'){
+    b.className = 'tnode';
+    b.innerHTML = `<span class="tn">${d.name}</span><span class="tr">${d.role}</span>`;
+  } else {
+    const cls = ['node', d.kind === 'boss' ? 'boss' : '', k === 'khoi' ? 'lead' : '', d.state === 'on' ? 'active' : 'paused'];
+    b.className = cls.filter(Boolean).join(' ');
+    b.innerHTML = (k === 'khoi' ? '<span class="you">TỔNG CHỈ HUY — BẠN ĐANG Ở ĐÂY</span>' : '') + `<span class="ring"></span>
       <span class="ava">${d.ini}</span>
       <span class="nm">${d.name}</span>
       <span class="rl">${d.role}</span>
       <span class="stt">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ'}</span>
       <span class="doing">${d.doing}</span>
       <span class="bar"><i></i></span>`;
-    b.addEventListener('click', () => showDetail(k));
-    stage.appendChild(b);
   }
+  b.addEventListener('click', () => showDetail(k));
+  return b;
+}
+// Cụm 7 tổ của công ty con, đặt gọn thành một khối
+function buildCluster(){
+  const cl = document.createElement('div');
+  cl.className = 'cluster'; cl.id = 'cluster';
+  cl.style.left = CLUSTER.pos[0] + '%'; cl.style.top = CLUSTER.pos[1] + '%';
+  cl.innerHTML = '<div class="ch">Công ty con Tiểu Tiểu Khôi Intelligence · 7 tổ</div><div class="cgrid"></div>';
+  const g = cl.querySelector('.cgrid');
+  CLUSTER.keys.forEach(k => g.appendChild(makeNode(k)));
+  return cl;
+}
+function buildNodes(){
+  const place = k => {
+    const b = makeNode(k), [x, y] = NODE_POS[k];
+    b.style.left = x + '%'; b.style.top = y + '%';
+    stage.appendChild(b);
+  };
+  ['boss','khoi','tkhoi','tg','keyfree'].forEach(place);
+  stage.appendChild(buildCluster());
+  ['de','codex','claude','anti'].forEach(place);
 }
 function buildRooms(){
   for(const r in ROOMS){
@@ -276,9 +382,10 @@ function buildHub(){
     const b = document.createElement('button');
     b.className = 'task'; b.id = 't-' + i;
     const who = t.assign.map(k => NODES[k].name).join(' + ');
-    b.innerHTML = `<span class="tt">${t.title}</span><span class="tm">Giao: ${who} · ${t.meta}</span><span class="st">Chờ</span>`;
+    b.innerHTML = `<span class="tt">${t.title}</span><span class="st">Chờ</span><span class="tm">Giao: ${who} · ${t.meta}</span>`;
     b.addEventListener('click', () => runTask(i));
     list.appendChild(b);
+    if(t.error) setTaskState(i, 'error', 'LỖI');
   });
 }
 function setTaskState(i, cls, text){
@@ -287,52 +394,65 @@ function setTaskState(i, cls, text){
   b.querySelector('.st').textContent = text;
 }
 function updateSummary(){
-  const on = Object.values(NODES).filter(n => n.state === 'on').length;
-  $('#sum').textContent = `AI đang hoạt động: ${on}/${Object.keys(NODES).length} · Nhiệm vụ demo: ${TASKS.length} · Đã chuyển sang phòng: ${doneCount}`;
+  const ai = Object.values(NODES).filter(n => n.kind === 'ai');
+  const on = ai.filter(n => n.state === 'on').length;
+  $('#sum').textContent = `AI đang hoạt động: ${on}/${ai.length} · Nhiệm vụ demo: ${TASKS.length} · Đã chuyển sang phòng: ${doneCount}` + (errCount ? ` · Lỗi: ${errCount}` : '');
 }
 function toast(msg){
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
+// Chạy lại hiệu ứng rung cho một phần tử
+function jolt(el){
+  el.classList.remove('jolt'); void el.offsetWidth;
+  el.classList.add('jolt');
+  setTimeout(() => el.classList.remove('jolt'), 1600);
+}
 
 // ===== Hiệu ứng: gói dữ liệu, node làm việc, đẩy sang phòng =====
-function makePkt(){
+function makePkt(err){
   const c = document.createElementNS(NS, 'circle');
-  c.setAttribute('r', 5); c.setAttribute('class', 'pkt');
+  c.setAttribute('r', 5); c.setAttribute('class', 'pkt' + (err ? ' err' : ''));
   fx.appendChild(c);
   return c;
 }
-// Gói sáng chạy từ hub tới node được giao
-async function sendToNode(k){
+// Gói sáng chạy từ hub tới node được giao (đỏ nếu lỗi)
+async function sendToNode(k, err){
   const L = links['amb-' + k];
   if(!L) return;
-  setHot(k, true);
-  const c = makePkt();
+  setHot(k, true, err);
+  const c = makePkt(err);
   await along(L.el, 900, p => { c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); });
   c.remove();
 }
-// Node pulse mạnh và thanh tiến độ chạy
+// Node pulse mạnh và thanh tiến độ chạy; nếu lỗi thì node nhấp nháy đỏ
 async function work(k, task){
+  const err = !!task.error;
   const n = ref('n-' + k), dl = n.querySelector('.doing'), bar = n.querySelector('.bar i');
   n.classList.add('working');
+  if(err) n.classList.add('err');
   dl.textContent = '▸ ' + task.title;
   bar.style.transition = 'none'; bar.style.width = '0%';
   void bar.offsetWidth;
   bar.style.transition = 'width 2.2s linear'; bar.style.width = '100%';
   await sleep(2200);
   n.classList.remove('working');
-  dl.textContent = NODES[k].doing;
+  dl.textContent = err ? '✕ ' + task.meta : NODES[k].doing;
   bar.style.transition = 'none'; bar.style.width = '0%';
   setHot(k, false);
 }
-// Nhiệm vụ bay theo mũi tên từ node sang phòng đích
+// Nhiệm vụ bay theo mũi tên từ node sang phòng đích (mũi tên đỏ nếu lỗi)
 async function pushToRoom(k, room, task){
+  const err = !!task.error;
   const key = 'lane-' + k + '-' + room;
   const L = links[key] || addLink(key, 'n-' + k, 'bottom', 'r-' + room, 'top', 'lane', false, 'v');
   layoutLink(L);
+  L.el.setAttribute('marker-end', err ? 'url(#arrow-err)' : 'url(#arrow)');
+  L.el.classList.toggle('err', err);
   const start = L.el.getPointAtLength(0);
   flyer.textContent = task.short;
+  flyer.classList.toggle('err', err);
   flyer.style.left = start.x + 'px'; flyer.style.top = start.y + 'px';
   L.el.classList.add('show');
   flyer.classList.add('show');
@@ -340,33 +460,47 @@ async function pushToRoom(k, room, task){
   flyer.classList.remove('show');
   L.el.classList.remove('show');
   const r = ref('r-' + room);
-  r.classList.add('lit');
-  setTimeout(() => r.classList.remove('lit'), 1800);
-  addChip(room, task.short);
+  if(err){
+    r.classList.add('err'); // giữ đỏ tới khi đặt lại
+  } else {
+    r.classList.add('lit');
+    setTimeout(() => r.classList.remove('lit'), 1800);
+  }
+  addChip(room, task.short, err);
 }
-function addChip(room, text){
+function addChip(room, text, err){
   const r = ref('r-' + room), box = r.querySelector('.chips');
   const c = document.createElement('span');
-  c.className = 'chip'; c.textContent = '✓ ' + text;
+  c.className = 'chip' + (err ? ' err' : '');
+  c.textContent = err ? '✕ ' + text + ' — LỖI' : '✓ ' + text;
   box.prepend(c);
   while(box.children.length > 3) box.lastChild.remove();
+  if(err) return; // nhiệm vụ lỗi không tính là "xong"
   roomStats[room] = (roomStats[room] || 0) + 1;
   r.querySelector('.cnt').textContent = roomStats[room] + ' xong';
   r.classList.add('has');
 }
 
-// Chạy một nhiệm vụ: hub → node → phòng đích
+// Chạy một nhiệm vụ: hub → node → phòng đích (nhiệm vụ lỗi diễn thêm hiệu ứng đỏ)
 async function runTask(i){
   if(busy){ toast('Đang chạy một nhiệm vụ khác, chờ xíu…'); return false; }
   busy = true;
-  const task = TASKS[i];
+  const task = TASKS[i], err = !!task.error;
   setTaskState(i, 'running', 'Đang chạy → ' + task.assign.map(k => NODES[k].name).join(' + '));
   try{
-    await Promise.all(task.assign.map(k => sendToNode(k)));
+    await Promise.all(task.assign.map(k => sendToNode(k, err)));
     await Promise.all(task.assign.map(k => work(k, task)));
-    await pushToRoom(task.assign[0], task.room, task);
-    doneCount++;
-    setTaskState(i, 'done', '✓ Đã chuyển → ' + ROOMS[task.room].name);
+    if(err){
+      setTaskState(i, 'error', 'LỖI');
+      jolt(ref('t-' + i));
+      toast('⚠ Codex lỗi 401 token_expired — cần chạy codex login lại');
+      await pushToRoom(task.assign[0], task.room, task);
+      errCount++;
+    } else {
+      await pushToRoom(task.assign[0], task.room, task);
+      doneCount++;
+      setTaskState(i, 'done', '✓ Đã chuyển → ' + ROOMS[task.room].name);
+    }
     updateSummary();
   } finally {
     busy = false;
@@ -374,7 +508,7 @@ async function runTask(i){
   return true;
 }
 
-// Chế độ tự động: chạy lần lượt các nhiệm vụ, lặp lại
+// Chế độ tự động: chạy lần lượt các nhiệm vụ (có cả nhiệm vụ lỗi), lặp lại
 async function autoLoop(){
   autoOn = true; setAutoBtn();
   let i = 0;
@@ -389,29 +523,52 @@ async function autoLoop(){
 function setAutoBtn(){
   $('#auto').textContent = autoOn ? '⏹ Dừng chạy tự động' : '▶ Chạy demo tự động';
 }
+// Đặt lại: xoá mọi trạng thái lỗi (huy hiệu, đỏ, rung) và đưa về trạng thái ban đầu
 function resetDemo(){
   if(busy){ toast('Đợi nhiệm vụ đang chạy xong đã.'); return; }
   autoOn = false; setAutoBtn();
-  doneCount = 0;
-  TASKS.forEach((t, i) => setTaskState(i, '', 'Chờ'));
+  doneCount = 0; errCount = 0;
+  TASKS.forEach((t, i) => {
+    setTaskState(i, t.error ? 'error' : '', t.error ? 'LỖI' : 'Chờ');
+  });
   for(const r in ROOMS){
     const el = ref('r-' + r);
     el.querySelector('.chips').innerHTML = '';
     el.querySelector('.cnt').textContent = '0 xong';
-    el.classList.remove('has', 'lit');
+    el.classList.remove('has', 'lit', 'err');
     roomStats[r] = 0;
   }
+  for(const k in NODES){
+    const n = ref('n-' + k);
+    n.classList.remove('working', 'err');
+    const dl = n.querySelector('.doing');
+    if(dl) dl.textContent = NODES[k].doing;
+    const bar = n.querySelector('.bar i');
+    if(bar){ bar.style.transition = 'none'; bar.style.width = '0%'; }
+  }
+  for(const key in links){
+    const L = links[key];
+    L.el.classList.remove('err');
+    L.dots.forEach(c => c.classList.remove('err'));
+    if(key.startsWith('lane-')){
+      L.el.classList.remove('show');
+      L.el.setAttribute('marker-end', 'url(#arrow)');
+    }
+  }
+  flyer.classList.remove('show', 'err');
   updateSummary();
 }
 
-// Bảng chi tiết node
+// Bảng chi tiết node (AI, Sếp lớn hoặc tổ)
 function showDetail(k){
   const d = NODES[k], dt = $('#detail');
   const mine = TASKS.filter(t => t.assign.includes(k));
   const doingHtml = mine.length ? mine.map(t => '• ' + t.title).join('<br>') : d.doing;
+  const parentHtml = d.parent ? `<div class="dl">Trực thuộc:</div><div class="dd">${d.parent}</div>` : '';
   dt.innerHTML = `<div class="dh"><b>${d.name}</b><button class="x" aria-label="Đóng">×</button></div>
     <div class="dr">${d.role}</div>
     <div class="dstt ${d.state}">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ — ' + d.reason}</div>
+    ${parentHtml}
     <div class="dl">Việc đang làm (demo):</div>
     <div class="dd">${doingHtml}</div>`;
   dt.hidden = false;
@@ -438,9 +595,11 @@ function tick(now){
 buildNodes();
 buildRooms();
 buildHub();
+// Dây hub → các AI (có gói dữ liệu chạy)
 for(const k in NODES){
+  if(NODES[k].kind !== 'ai') continue;
   const on = NODES[k].state === 'on';
-  const L = addLink('amb-' + k, 'hub', 'c', 'n-' + k, 'c', 'link' + (on ? '' : ' off'), on, 'auto');
+  const L = addLink('amb-' + k, 'hub', 'toward', 'n-' + k, 'c','link' + (on ? '' : ' off'), on, 'auto');
   if(on){
     for(let i = 0; i < 3; i++){
       const c = document.createElementNS(NS, 'circle');
@@ -450,6 +609,12 @@ for(const k in NODES){
     }
   }
 }
+// Dây tĩnh theo sơ đồ tổ chức (không có gói chạy)
+addLink('org-boss-khoi',    'n-boss', 'bottom', 'n-khoi',    'top', 'link', false, 'v');
+addLink('org-boss-tkhoi',   'n-boss', 'bottom', 'n-tkhoi',   'top', 'link', false, 'v');
+addLink('org-khoi-tg',      'n-khoi', 'bottom', 'n-tg',      'top', 'link', false, 'v');
+addLink('org-tkhoi-keyfree','n-tkhoi','bottom', 'n-keyfree', 'top', 'link', false, 'v');
+
 function resize(){
   svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
   Object.values(links).forEach(layoutLink);
@@ -457,6 +622,7 @@ function resize(){
 new ResizeObserver(resize).observe(stage);
 window.addEventListener('load', resize);
 $('#auto').addEventListener('click', () => { autoOn ? (autoOn = false, setAutoBtn()) : autoLoop(); });
+$('#simerr').addEventListener('click', () => runTask(ERR_IDX));
 $('#reset').addEventListener('click', resetDemo);
 resize();
 updateSummary();
