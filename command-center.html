@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trung tâm điều khiển TBK — BẢN DEMO</title>
+<style>
+:root{--cy:#22d3ee;--gr:#4ade80;--bg:#050b14;--panel:rgba(8,20,34,.88);--mute:#64748b;--txt:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{background-image:radial-gradient(ellipse at 50% 35%,#0b2233 0%,var(--bg) 70%);padding-bottom:24px}
+/* Lưới mờ kiểu bản đồ mạng */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(34,211,238,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.06) 1px,transparent 1px);
+  background-size:40px 40px}
+
+.top{position:relative;text-align:center;padding:18px 12px 4px}
+.top h1{font-size:clamp(18px,3vw,26px);letter-spacing:.12em;color:var(--cy);text-shadow:0 0 12px rgba(34,211,238,.5)}
+.banner{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:#fde68a;background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.4);padding:4px 10px;border-radius:6px;letter-spacing:.04em}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.btn{font:inherit;font-size:13px;font-weight:700;color:#06202b;background:var(--cy);border:1px solid var(--cy);border-radius:8px;padding:9px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--cy)}
+.btn:hover{filter:brightness(1.1)}
+.sum{font-size:12px;color:var(--mute);margin-top:8px}
+
+/* Sân khấu: desktop dùng toạ độ % (absolute), mobile xếp lưới */
+#stage{position:relative;width:min(1100px,100%);height:640px;margin:4px auto 0}
+#svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}
+.link{fill:none;stroke:rgba(34,211,238,.28);stroke-width:1.5;stroke-dasharray:4 8;animation:flow 1.6s linear infinite}
+.link.off{stroke:rgba(100,116,139,.22);animation:none}
+.link.hot{stroke:rgba(74,222,128,.85);stroke-width:2.2}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.dot{fill:var(--cy)}
+.dot.hot{fill:var(--gr)}
+.pkt{fill:#fff}
+.lane{fill:none;stroke:var(--gr);stroke-width:2;opacity:0;transition:opacity .4s}
+.lane.show{opacity:1}
+
+/* Hub nhiệm vụ ở giữa */
+#hub{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:300px;z-index:3;background:rgba(6,18,30,.93);border:1px solid rgba(34,211,238,.5);border-radius:18px;padding:14px;box-shadow:0 0 40px rgba(34,211,238,.18)}
+#hub h2{font-size:13px;letter-spacing:.14em;color:var(--cy);text-align:center}
+#hub h2 small{display:block;color:var(--mute);letter-spacing:0;font-weight:400;font-size:11px;margin-top:3px}
+.task{display:block;width:100%;text-align:left;font:inherit;color:var(--txt);background:#0b1f2e;border:1px solid #164e63;border-radius:10px;padding:9px 10px;margin-top:8px;cursor:pointer}
+.task:hover{border-color:var(--cy)}
+.task .tt{display:block;font-weight:700;font-size:13px}
+.task .tm{display:block;font-size:11px;color:var(--mute);margin-top:2px;line-height:1.35}
+.task .st{display:inline-block;margin-top:5px;font-size:11px;padding:2px 8px;border-radius:20px;background:#1e293b;color:#cbd5e1}
+.task.running .st{background:rgba(34,211,238,.18);color:var(--cy)}
+.task.done .st{background:rgba(74,222,128,.15);color:var(--gr)}
+
+/* Node AI */
+.node{position:absolute;transform:translate(-50%,-50%);width:170px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 10px 10px;font:inherit;color:var(--txt);text-align:center;cursor:pointer;background:var(--panel);border:1px solid rgba(34,211,238,.35);border-radius:14px;box-shadow:0 0 18px rgba(34,211,238,.12);transition:border-color .3s,box-shadow .3s}
+.node:hover{border-color:var(--cy)}
+.node .ring{position:absolute;top:34px;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px solid var(--gr);opacity:0;pointer-events:none}
+.node.active .ring{animation:pulse 2.6s ease-out infinite}
+.node.working{border-color:var(--gr);box-shadow:0 0 28px rgba(74,222,128,.45)}
+.node.working .ring{animation:pulse .8s ease-out infinite;border-color:var(--cy)}
+@keyframes pulse{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.5);opacity:0}}
+.node.paused{opacity:.5;filter:grayscale(.7)}
+.ava{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#ecfeff;background:linear-gradient(135deg,#0e7490,#15803d)}
+.node.paused .ava{background:#334155}
+.nm{font-weight:700;font-size:14px;margin-top:4px}
+.rl{font-size:11.5px;color:#7dd3fc}
+.stt{font-size:11px;color:var(--gr)}
+.node.paused .stt{color:#94a3b8}
+.doing{font-size:11px;color:var(--mute);min-height:28px;line-height:1.3}
+.bar{width:100%;height:4px;background:#0f2a3a;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--gr))}
+
+/* Phòng */
+.room{position:absolute;transform:translate(-50%,-50%);width:200px;z-index:3;background:var(--panel);border:1px solid #155e75;border-radius:12px;padding:9px;transition:box-shadow .4s,border-color .4s}
+.room.lit{border-color:var(--gr);box-shadow:0 0 28px rgba(74,222,128,.5)}
+.room .rh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.room .nm2{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room .ico{display:inline-grid;place-items:center;min-width:26px;height:20px;padding:0 4px;border-radius:5px;background:#0e7490;color:#ecfeff;font-size:10px}
+.room .cnt{font-size:10.5px;font-weight:400;color:var(--mute)}
+.room.has .cnt{color:var(--gr)}
+.room .chips{margin-top:6px;display:flex;flex-direction:column;gap:3px;min-height:18px}
+.chip{font-size:10.5px;background:rgba(74,222,128,.12);color:#bbf7d0;border-radius:5px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Nhãn bay từ node sang phòng */
+#flyer{position:absolute;z-index:5;transform:translate(-50%,-50%);background:var(--gr);color:#052e16;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .3s;box-shadow:0 0 16px var(--gr)}
+#flyer.show{opacity:1}
+
+/* Bảng chi tiết node */
+#detail{position:fixed;right:16px;bottom:16px;width:280px;z-index:20;background:#071a28;border:1px solid var(--cy);border-radius:14px;padding:14px;box-shadow:0 0 30px rgba(34,211,238,.25);font-size:13px}
+#detail[hidden]{display:none}
+#detail .dh{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+#detail .x{background:none;border:0;color:var(--mute);font-size:20px;cursor:pointer;line-height:1}
+#detail .dr{color:#7dd3fc;margin-top:2px}
+#detail .dstt{margin-top:6px;font-weight:700;color:var(--gr)}
+#detail .dstt.off{color:#94a3b8}
+#detail .dl{margin-top:10px;font-size:11px;color:var(--mute)}
+#detail .dd{margin-top:3px;line-height:1.5}
+
+#toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);background:#0b2233;border:1px solid var(--cy);padding:8px 14px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:30}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{text-align:center;font-size:11px;color:var(--mute);margin-top:10px;padding:0 12px}
+
+/* Điện thoại: node, phòng xếp lưới; dây nối vẫn tính theo vị trí DOM thật */
+@media (max-width:760px){
+  #stage{height:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 10px 16px}
+  #hub{position:relative;left:auto;top:auto;transform:none;width:auto;grid-column:1/-1;order:0}
+  .node{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:1}
+  .room{position:relative;left:auto!important;top:auto!important;width:auto;transform:none;order:2}
+  #detail{left:10px;right:10px;bottom:10px;width:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .node.active .ring,.node.working .ring,.link{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>TRUNG TÂM ĐIỀU KHIỂN TBK</h1>
+  <span class="banner">BẢN DEMO — DỮ LIỆU MẪU, CHƯA NỐI DỮ LIỆU THẬT</span>
+  <div class="controls">
+    <button id="auto" class="btn">▶ Chạy demo tự động</button>
+    <button id="reset" class="btn ghost">↺ Đặt lại</button>
+  </div>
+  <p id="sum" class="sum"></p>
+</header>
+
+<div id="stage">
+  <svg id="svg" aria-hidden="true">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/>
+      </marker>
+    </defs>
+    <g id="links"></g>
+    <g id="fx"></g>
+  </svg>
+
+  <div id="hub">
+    <h2>HUB NHIỆM VỤ<small>Nhiệm vụ demo — bấm để chạy</small></h2>
+    <div id="tasks"></div>
+  </div>
+
+  <div id="flyer"></div>
+</div>
+
+<p class="foot">Dữ liệu tĩnh ngay trong file (trạng thái ngày 20/11/2026). Không gọi API, không tải thư viện ngoài.</p>
+<div id="toast"></div>
+<div id="detail" hidden></div>
+
+<script>
+// ===== Dữ liệu mẫu (DEMO, không phải dữ liệu thật) =====
+const NODES = {
+  khoi:   {name:'Tiểu Khôi',      role:'Tổng chỉ huy', state:'on',  ini:'TK',  doing:'Điều phối nhiệm vụ demo'},
+  tkhoi:  {name:'Tiểu Tiểu Khôi', role:'Phó giám đốc', state:'on',  ini:'TTK', doing:'Theo dõi thảo luận trial'},
+  de:     {name:'Tiểu Đệ',        role:'Tìm tin',      state:'on',  ini:'TĐ',  doing:'Tìm tin phục vụ demo'},
+  claude: {name:'Claude Code',    role:'Viết code',    state:'on',  ini:'CC',  doing:'Port Windows, OTP, SPEC 2'},
+  codex:  {name:'Codex',          role:'Viết code',    state:'off', ini:'CX',  doing:'Chưa nhận việc', reason:'đăng nhập hết hạn'},
+  anti:   {name:'Antigravity',    role:'Viết code',    state:'on',  ini:'AG',  doing:'Sẵn sàng nhận việc'}
+};
+const ROOMS = {
+  telegram:{name:'Phòng Telegram', ico:'TG'},
+  trial:   {name:'Phòng Trial',    ico:'TR'},
+  code:    {name:'Phòng Code',     ico:'</>'},
+  check:   {name:'Phòng Kiểm tra', ico:'✓'}
+};
+const TASKS = [
+  {title:'Port Windows sang Supabase', short:'Port Windows', meta:'Draft PR #5 · xong code, chờ máy Windows thật', assign:['claude'], room:'code'},
+  {title:'Sửa OTP nhảy số',            short:'Sửa OTP',      meta:'PR #70 · chờ review',                        assign:['claude'], room:'check'},
+  {title:'SPEC 2 FALLBACK_TAG beta.5', short:'SPEC 2',       meta:'PR #69 · chờ duyệt merge',                   assign:['claude'], room:'telegram'},
+  {title:'Thảo luận FreeLLMAPI vs LiteLLM', short:'FreeLLMAPI vs LiteLLM', meta:'Phòng trial · chờ sếp ra chủ đề', assign:['khoi','tkhoi'], room:'trial'}
+];
+// Vị trí (%) trên sân khấu desktop
+const NODE_POS = {khoi:[22,16], tkhoi:[78,16], de:[9,44], claude:[91,44], codex:[22,68], anti:[78,68]};
+const ROOM_POS = {telegram:[14,90], trial:[38,90], code:[62,90], check:[86,90]};
+
+// ===== Tiện ích =====
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const stage = $('#stage'), svg = $('#svg'), linkLayer = $('#links'), fx = $('#fx'), flyer = $('#flyer');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ref = id => document.getElementById(id);
+
+let busy = false, autoOn = false, doneCount = 0;
+const roomStats = {};
+const links = {}; // registry các đường nối: {el, a, aw, b, bw, len, dots, hot, ambient}
+
+// Điểm neo trên phần tử, toạ độ tính theo sân khấu (= đơn vị viewBox)
+function anchor(el, where){
+  const s = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const x = r.left - s.left, y = r.top - s.top;
+  if(where === 'top') return {x: x + r.width/2, y};
+  if(where === 'bottom') return {x: x + r.width/2, y: y + r.height};
+  return {x: x + r.width/2, y: y + r.height/2};
+}
+// Đường cong S: 'v' = dọc (cho đường node→phòng), 'auto' = theo hướng chính
+function curve(A, B, mode){
+  const dx = B.x - A.x, dy = B.y - A.y;
+  if(mode === 'v' || Math.abs(dy) > Math.abs(dx)){
+    const my = (A.y + B.y)/2;
+    return `M${A.x},${A.y} C${A.x},${my} ${B.x},${my} ${B.x},${B.y}`;
+  }
+  const mx = (A.x + B.x)/2;
+  return `M${A.x},${A.y} C${mx},${A.y} ${mx},${B.y} ${B.x},${B.y}`;
+}
+function layoutLink(L){
+  const A = anchor(ref(L.a), L.aw), B = anchor(ref(L.b), L.bw);
+  L.el.setAttribute('d', curve(A, B, L.mode));
+  L.len = L.el.getTotalLength();
+}
+function addLink(key, a, aw, b, bw, cls, ambient, mode){
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('class', cls);
+  if(cls.includes('lane')) p.setAttribute('marker-end', 'url(#arrow)');
+  linkLayer.appendChild(p);
+  const L = {el:p, a, aw, b, bw, mode, len:0, dots:[], hot:false, ambient};
+  links[key] = L;
+  layoutLink(L);
+  return L;
+}
+// Đi dọc một đường SVG trong dur ms; cb nhận toạ độ mỗi khung hình
+function along(pathEl, dur, cb){
+  const len = pathEl.getTotalLength();
+  return new Promise(res => {
+    const t0 = performance.now();
+    const step = now => {
+      const p = Math.min(1, (now - t0)/dur);
+      const e = p < .5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2; // ease in-out
+      cb(pathEl.getPointAtLength(e*len));
+      if(p < 1) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+}
+function setHot(k, on){
+  const L = links['amb-' + k];
+  if(!L) return;
+  L.hot = on;
+  L.el.classList.toggle('hot', on);
+  L.dots.forEach(c => c.classList.toggle('hot', on));
+}
+
+// ===== Dựng giao diện =====
+function buildNodes(){
+  for(const k in NODES){
+    const d = NODES[k], [x, y] = NODE_POS[k];
+    const b = document.createElement('button');
+    b.className = 'node ' + (d.state === 'on' ? 'active' : 'paused');
+    b.id = 'n-' + k;
+    b.style.left = x + '%'; b.style.top = y + '%';
+    b.innerHTML = `<span class="ring"></span>
+      <span class="ava">${d.ini}</span>
+      <span class="nm">${d.name}</span>
+      <span class="rl">${d.role}</span>
+      <span class="stt">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ'}</span>
+      <span class="doing">${d.doing}</span>
+      <span class="bar"><i></i></span>`;
+    b.addEventListener('click', () => showDetail(k));
+    stage.appendChild(b);
+  }
+}
+function buildRooms(){
+  for(const r in ROOMS){
+    const [x, y] = ROOM_POS[r];
+    const d = document.createElement('div');
+    d.className = 'room'; d.id = 'r-' + r;
+    d.style.left = x + '%'; d.style.top = y + '%';
+    d.innerHTML = `<div class="rh"><span class="ico">${ROOMS[r].ico}</span><span class="nm2">${ROOMS[r].name}</span><span class="cnt">0 xong</span></div><div class="chips"></div>`;
+    stage.appendChild(d);
+  }
+}
+function buildHub(){
+  const list = $('#tasks');
+  TASKS.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = 'task'; b.id = 't-' + i;
+    const who = t.assign.map(k => NODES[k].name).join(' + ');
+    b.innerHTML = `<span class="tt">${t.title}</span><span class="tm">Giao: ${who} · ${t.meta}</span><span class="st">Chờ</span>`;
+    b.addEventListener('click', () => runTask(i));
+    list.appendChild(b);
+  });
+}
+function setTaskState(i, cls, text){
+  const b = ref('t-' + i);
+  b.className = 'task' + (cls ? ' ' + cls : '');
+  b.querySelector('.st').textContent = text;
+}
+function updateSummary(){
+  const on = Object.values(NODES).filter(n => n.state === 'on').length;
+  $('#sum').textContent = `AI đang hoạt động: ${on}/${Object.keys(NODES).length} · Nhiệm vụ demo: ${TASKS.length} · Đã chuyển sang phòng: ${doneCount}`;
+}
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ===== Hiệu ứng: gói dữ liệu, node làm việc, đẩy sang phòng =====
+function makePkt(){
+  const c = document.createElementNS(NS, 'circle');
+  c.setAttribute('r', 5); c.setAttribute('class', 'pkt');
+  fx.appendChild(c);
+  return c;
+}
+// Gói sáng chạy từ hub tới node được giao
+async function sendToNode(k){
+  const L = links['amb-' + k];
+  if(!L) return;
+  setHot(k, true);
+  const c = makePkt();
+  await along(L.el, 900, p => { c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); });
+  c.remove();
+}
+// Node pulse mạnh và thanh tiến độ chạy
+async function work(k, task){
+  const n = ref('n-' + k), dl = n.querySelector('.doing'), bar = n.querySelector('.bar i');
+  n.classList.add('working');
+  dl.textContent = '▸ ' + task.title;
+  bar.style.transition = 'none'; bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width 2.2s linear'; bar.style.width = '100%';
+  await sleep(2200);
+  n.classList.remove('working');
+  dl.textContent = NODES[k].doing;
+  bar.style.transition = 'none'; bar.style.width = '0%';
+  setHot(k, false);
+}
+// Nhiệm vụ bay theo mũi tên từ node sang phòng đích
+async function pushToRoom(k, room, task){
+  const key = 'lane-' + k + '-' + room;
+  const L = links[key] || addLink(key, 'n-' + k, 'bottom', 'r-' + room, 'top', 'lane', false, 'v');
+  layoutLink(L);
+  const start = L.el.getPointAtLength(0);
+  flyer.textContent = task.short;
+  flyer.style.left = start.x + 'px'; flyer.style.top = start.y + 'px';
+  L.el.classList.add('show');
+  flyer.classList.add('show');
+  await along(L.el, 1100, p => { flyer.style.left = p.x + 'px'; flyer.style.top = p.y + 'px'; });
+  flyer.classList.remove('show');
+  L.el.classList.remove('show');
+  const r = ref('r-' + room);
+  r.classList.add('lit');
+  setTimeout(() => r.classList.remove('lit'), 1800);
+  addChip(room, task.short);
+}
+function addChip(room, text){
+  const r = ref('r-' + room), box = r.querySelector('.chips');
+  const c = document.createElement('span');
+  c.className = 'chip'; c.textContent = '✓ ' + text;
+  box.prepend(c);
+  while(box.children.length > 3) box.lastChild.remove();
+  roomStats[room] = (roomStats[room] || 0) + 1;
+  r.querySelector('.cnt').textContent = roomStats[room] + ' xong';
+  r.classList.add('has');
+}
+
+// Chạy một nhiệm vụ: hub → node → phòng đích
+async function runTask(i){
+  if(busy){ toast('Đang chạy một nhiệm vụ khác, chờ xíu…'); return false; }
+  busy = true;
+  const task = TASKS[i];
+  setTaskState(i, 'running', 'Đang chạy → ' + task.assign.map(k => NODES[k].name).join(' + '));
+  try{
+    await Promise.all(task.assign.map(k => sendToNode(k)));
+    await Promise.all(task.assign.map(k => work(k, task)));
+    await pushToRoom(task.assign[0], task.room, task);
+    doneCount++;
+    setTaskState(i, 'done', '✓ Đã chuyển → ' + ROOMS[task.room].name);
+    updateSummary();
+  } finally {
+    busy = false;
+  }
+  return true;
+}
+
+// Chế độ tự động: chạy lần lượt các nhiệm vụ, lặp lại
+async function autoLoop(){
+  autoOn = true; setAutoBtn();
+  let i = 0;
+  while(autoOn){
+    if(busy){ await sleep(400); continue; }
+    await runTask(i);
+    i = (i + 1) % TASKS.length;
+    await sleep(1400);
+  }
+  setAutoBtn();
+}
+function setAutoBtn(){
+  $('#auto').textContent = autoOn ? '⏹ Dừng chạy tự động' : '▶ Chạy demo tự động';
+}
+function resetDemo(){
+  if(busy){ toast('Đợi nhiệm vụ đang chạy xong đã.'); return; }
+  autoOn = false; setAutoBtn();
+  doneCount = 0;
+  TASKS.forEach((t, i) => setTaskState(i, '', 'Chờ'));
+  for(const r in ROOMS){
+    const el = ref('r-' + r);
+    el.querySelector('.chips').innerHTML = '';
+    el.querySelector('.cnt').textContent = '0 xong';
+    el.classList.remove('has', 'lit');
+    roomStats[r] = 0;
+  }
+  updateSummary();
+}
+
+// Bảng chi tiết node
+function showDetail(k){
+  const d = NODES[k], dt = $('#detail');
+  const mine = TASKS.filter(t => t.assign.includes(k));
+  const doingHtml = mine.length ? mine.map(t => '• ' + t.title).join('<br>') : d.doing;
+  dt.innerHTML = `<div class="dh"><b>${d.name}</b><button class="x" aria-label="Đóng">×</button></div>
+    <div class="dr">${d.role}</div>
+    <div class="dstt ${d.state}">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ — ' + d.reason}</div>
+    <div class="dl">Việc đang làm (demo):</div>
+    <div class="dd">${doingHtml}</div>`;
+  dt.hidden = false;
+  dt.querySelector('.x').addEventListener('click', () => { dt.hidden = true; });
+}
+
+// ===== Vòng lặp dây dữ liệu chạy dọc (hiệu ứng truyền dữ liệu) =====
+function tick(now){
+  const s = now/1000;
+  for(const k in links){
+    const L = links[k];
+    if(!L.ambient || !L.len) continue;
+    const speed = L.hot ? 0.35 : 0.12; // chu kỳ/giây
+    L.dots.forEach((c, i) => {
+      const f = (s*speed + i/L.dots.length) % 1;
+      const p = L.el.getPointAtLength(f*L.len);
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+    });
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== Khởi tạo =====
+buildNodes();
+buildRooms();
+buildHub();
+for(const k in NODES){
+  const on = NODES[k].state === 'on';
+  const L = addLink('amb-' + k, 'hub', 'c', 'n-' + k, 'c', 'link' + (on ? '' : ' off'), on, 'auto');
+  if(on){
+    for(let i = 0; i < 3; i++){
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('r', 3); c.setAttribute('class', 'dot');
+      fx.appendChild(c);
+      L.dots.push(c);
+    }
+  }
+}
+function resize(){
+  svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+  Object.values(links).forEach(layoutLink);
+}
+new ResizeObserver(resize).observe(stage);
+window.addEventListener('load', resize);
+$('#auto').addEventListener('click', () => { autoOn ? (autoOn = false, setAutoBtn()) : autoLoop(); });
+$('#reset').addEventListener('click', resetDemo);
+resize();
+updateSummary();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
