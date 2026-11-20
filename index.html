@@ -62,17 +62,8 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
 </style>
 </head>
 <body>
-<div id="login">
-  <h1>TBK - Quản lý từ xa</h1>
-  <p>Nhập mật khẩu để xem bảng quản lý.</p>
-  <input type="password" id="passwordInput" placeholder="Mật khẩu" autocomplete="current-password">
-  <button onclick="doLogin()">Vào</button>
-  <div class="err" id="loginErr">Sai mật khẩu, thử lại.</div>
-</div>
-
-<div id="app" class="hidden">
+<div id="app">
 <header>
-  <button class="logout" onclick="doLogout()">Đăng xuất</button>
   <h1>TBK - Quản lý từ xa</h1>
   <p>TBK Intelligence + Tiểu Tiểu Khôi Intelligence &nbsp;•&nbsp; <span id="clock"></span></p>
 </header>
@@ -109,7 +100,6 @@ h2{font-size:16px;margin:18px 0 10px;color:#0f172a}
 </div>
 
 <script>
-const HASH = "eb8e1a3c7ce1d6bb9f255052b1bc9c4336504bf22282493439e7416bf6641444";
 const SUPABASE_URL = "https://yuafwbuhwdhitktqucib.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1YWZ3YnVod2RoaXRrdHF1Y2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NTQ5NjMsImV4cCI6MjEwODEzMDk2M30.TEwH0o8L4sCJuZH9WvkzcgxXHRsirqWr4DJUB_HgkBw";
 // Danh sách AI: chỉ giữ thông tin CỐ ĐỊNH (tên, vai trò, ghi chú).
@@ -127,16 +117,7 @@ const AIS = [
 let liveAI = null;       // payload.ai tu Supabase (null = chua co du lieu that)
 let livePipeline = null; // payload.pipeline tu Supabase
 let filter = "all";
-function sha256(s){return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""))}
-async function doLogin(){
-  const v = document.getElementById("passwordInput").value;
-  const h = await sha256(v);
-  if(h === HASH){ sessionStorage.setItem("tbk_auth","1"); showApp(); }
-  else { document.getElementById("loginErr").style.display = "block"; }
-}
-function doLogout(){ sessionStorage.removeItem("tbk_auth"); location.reload(); }
 function showApp(){
-  document.getElementById("login").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   renderTabs(); renderAI(); loadHealth(); loadTasks(); tick();
   setInterval(()=>{ loadHealth(); loadTasks(); tick(); }, 30000);
@@ -252,8 +233,7 @@ async function sendCmd(){
     document.getElementById("cmdInput").value = "";
   }catch(e){ document.getElementById("cmdList").innerHTML = "Gửi lệnh thất bại, thử lại."; }
 }
-document.getElementById("passwordInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
-if(sessionStorage.getItem("tbk_auth")==="1") showApp();
+showApp();
 </script>
 </body>
 </html>
