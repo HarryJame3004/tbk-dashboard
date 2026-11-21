@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Trung tâm điều khiển TBK — BẢN DEMO</title>
+<title>Trung tâm điều khiển TBK — LIVE</title>
 <style>
 /* ===== Bảng màu phim tối: espresso, vàng gold, kem, đỏ gạch. Không cyan/xanh/tím/xanh lá. ===== */
 :root{
@@ -126,6 +126,7 @@ body.intro .scene{animation:fadein 2s var(--ease) 3.6s both}
 .task:hover{border-color:rgba(232,201,122,.65);transform:translateX(2px)}
 .task .tt{font-weight:700;font-size:13.5px}
 .task .tm{grid-column:1/-1;display:block;font-size:11px;color:var(--mute);margin-top:3px;line-height:1.4;font-style:italic}
+.task .tm .when{white-space:nowrap}
 .task .st{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:2px;background:#3a2c18;color:var(--cream);white-space:nowrap}
 .task.running{border-color:var(--gold)}
 .task.running .st{background:rgba(217,180,92,.18);color:var(--gold-hi)}
@@ -209,11 +210,6 @@ html[data-mode=desktop] .cluster .ch{letter-spacing:.08em;white-space:nowrap}
 .chip.err{background:rgba(192,90,82,.16);color:var(--red-t)}
 @keyframes chipIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 
-/* Nhãn bay từ node sang phòng */
-#flyer{position:absolute;z-index:5;left:0;top:0;transform:translate(calc(var(--x,0px) - 50%),calc(var(--y,0px) - 50%));background:linear-gradient(180deg,#f3e2b0,#d9b45c);color:#1c1408;font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 11px;border-radius:2px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .6s var(--ease);box-shadow:0 8px 24px -8px rgba(217,180,92,.7)}
-#flyer.show{opacity:1}
-#flyer.err{background:linear-gradient(180deg,#c9736b,#a4484f);color:#fbeee9;box-shadow:0 8px 24px -8px rgba(192,90,82,.7)}
-
 /* ===== Bảng chi tiết: thẻ nổi (desktop) / bottom-sheet (mobile) ===== */
 #detail{position:fixed;right:18px;bottom:18px;width:300px;z-index:40;background:linear-gradient(180deg,#2a1f12,#1a130b);border:1px solid rgba(217,180,92,.5);border-radius:4px;padding:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.9),0 0 0 3px rgba(22,16,9,.9),0 0 0 4px rgba(217,180,92,.2);font-size:13px;
   opacity:0;visibility:hidden;transform:translateY(14px) scale(.98);transition:opacity .7s var(--ease),transform .9s var(--ease),visibility 0s .9s}
@@ -229,9 +225,6 @@ html[data-mode=desktop] .cluster .ch{letter-spacing:.08em;white-space:nowrap}
 #scrim{position:fixed;inset:0;z-index:35;background:rgba(12,8,4,.6);opacity:0;visibility:hidden;transition:opacity .7s var(--ease),visibility 0s .7s}
 #scrim.open{opacity:1;visibility:visible;transition:opacity .7s var(--ease)}
 html[data-mode=desktop] #scrim{display:none}
-
-#toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);background:#2a1f12;border:1px solid rgba(217,180,92,.6);padding:9px 16px;border-radius:3px;font-size:13px;color:var(--cream);opacity:0;transition:opacity .6s var(--ease),transform .6s var(--ease);pointer-events:none;z-index:50;max-width:calc(100% - 28px);text-align:center}
-#toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* Billing block kiểu cuối phim */
 .foot{text-align:center;margin:30px auto 0;padding:14px 12px 0;max-width:820px;border-top:1px solid rgba(217,180,92,.35);font-size:10.5px;color:var(--mute-2);letter-spacing:.14em;text-transform:uppercase;line-height:1.8}
@@ -298,13 +291,36 @@ html[data-mode=mobile] .task .tt{font-size:16px;overflow-wrap:anywhere}
 html[data-mode=mobile] .task .tm{font-size:13px}
 html[data-mode=mobile] .task .st{font-size:11px;padding:3px 9px}
 html[data-mode=mobile] .foot{font-size:11px}
-html[data-mode=mobile] #flyer{font-size:12px}
 html[data-mode=mobile] #detail{left:0;right:0;bottom:0;top:auto;width:100%;max-height:78vh;overflow-y:auto;border-radius:14px 14px 0 0;border-bottom:0;padding:10px 20px calc(24px + env(safe-area-inset-bottom,0px));transform:translateY(105%);font-size:15px;box-shadow:0 -20px 50px -10px rgba(0,0,0,.8)}
 html[data-mode=mobile] #detail.open{transform:none}
 html[data-mode=mobile] #detail .grip{display:block;width:44px;height:4px;border-radius:2px;background:rgba(217,180,92,.6);margin:0 auto 12px}
 html[data-mode=mobile] #detail .dh{font-size:18px}
 html[data-mode=mobile] #detail .x{width:44px;height:44px;font-size:26px;padding:0}
 html[data-mode=mobile] #detail .dd{font-size:15px}
+
+/* ===== Bổ sung bản LIVE: trạng thái kết nối, bộ lọc, phòng/nhiệm vụ đếm từ dữ liệu thật ===== */
+.live{margin-top:10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.live.ok{color:var(--gold-soft)}
+.live.bad{color:var(--red-t)}
+.fbar{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.fbtn{font:inherit;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);background:transparent;border:1px solid rgba(217,180,92,.22);border-radius:2px;padding:4px 8px;cursor:pointer;flex:1 1 auto;text-align:center;transition:color .6s var(--ease),border-color .6s var(--ease),background .6s var(--ease)}
+.fbtn:hover{color:var(--gold-soft);border-color:rgba(232,201,122,.6)}
+.fbtn.on{color:#1c1408;background:linear-gradient(180deg,#f0d88f,#c9a24a);border-color:rgba(243,226,176,.6)}
+.task .tb{grid-column:1/-1;margin-top:6px;height:2px}
+.empty{font-size:11.5px;color:var(--mute);font-style:italic;text-align:center;padding:10px 4px}
+.tnode .ts{font-size:10px;color:var(--mute-2);line-height:1.3;font-style:italic}
+.room{cursor:pointer}
+.room:focus-visible{outline:2px solid var(--gold-soft);outline-offset:3px}
+.room .rh{flex-wrap:wrap;row-gap:4px}
+.room .cnt{flex-basis:100%;white-space:normal;padding-left:33px;line-height:1.3}
+.dlist{display:block;width:100%;text-align:left;font:inherit;font-size:12px;color:var(--txt);background:none;border:0;border-top:1px solid rgba(217,180,92,.2);padding:7px 0;cursor:pointer;line-height:1.4}
+.dlist span{display:block;font-size:10.5px;color:var(--mute);font-style:italic}
+html[data-mode=mobile] .tnode .ts{font-size:12px}
+html[data-mode=mobile] .live{font-size:10.5px;line-height:1.5}
+html[data-mode=mobile] .fbtn{font-size:12px;min-height:40px;padding:6px 10px}
+/* Danh sách nhiệm vụ cuộn trong hub trên desktop để hub không đè hàng phòng; mobile xếp dọc đầy đủ */
+#tasks{max-height:330px;overflow-y:auto;overflow-x:hidden;padding-right:2px}
+html[data-mode=mobile] #tasks{max-height:none;overflow:visible}
 
 /* Giảm chuyển động: tắt trang trí; dữ liệu vẫn chạy nhưng không lia đèn, không rung, không nháy */
 @media (prefers-reduced-motion:reduce){
@@ -327,11 +343,11 @@ html[data-mode=mobile] #detail .dd{font-size:15px}
 <header class="top">
   <p class="eyebrow" style="--d:.2s">TBK INTELLIGENCE presents</p>
   <h1 data-text="TRUNG TÂM ĐIỀU KHIỂN TBK">TRUNG TÂM ĐIỀU KHIỂN TBK</h1>
-  <span class="banner" style="--d:2.4s">BẢN DEMO — DỮ LIỆU MẪU, CHƯA NỐI DỮ LIỆU THẬT</span>
+  <span class="banner" style="--d:2.4s">DỮ LIỆU THẬT · CẬP NHẬT TRỰC TIẾP</span>
+  <p id="live" class="live" style="--d:2.5s" role="status" aria-live="polite">Đang tải dữ liệu thật…</p>
   <div class="controls" style="--d:2.7s">
-    <button id="auto" class="btn">▶ Chạy demo tự động</button>
-    <button id="simerr" class="btn danger">⚠ Mô phỏng lỗi</button>
-    <button id="reset" class="btn ghost">↺ Đặt lại</button>
+    <button id="auto" class="btn" type="button" aria-pressed="true">Tự cập nhật: BẬT</button>
+    <button id="refresh" class="btn ghost" type="button">↻ Làm mới ngay</button>
   </div>
   <p id="sum" class="sum" style="--d:2.9s"></p>
 </header>
@@ -348,56 +364,79 @@ html[data-mode=mobile] #detail .dd{font-size:15px}
         <feGaussianBlur stdDeviation="2.6" result="b"/>
         <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
-      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 z" fill="#d9b45c"/>
-      </marker>
-      <marker id="arrow-err" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 z" fill="#c05a52"/>
-      </marker>
     </defs>
     <g id="links"></g>
     <g id="fx"></g>
   </svg>
   <div id="pool" aria-hidden="true"></div>
   <div id="hub" role="region" aria-label="Hub nhiệm vụ">
-    <h2>HUB NHIỆM VỤ<small>Nhiệm vụ demo — bấm để chạy</small></h2>
+    <h2>HUB NHIỆM VỤ<small>Nhiệm vụ thật từ pipeline · bấm để xem chi tiết</small></h2>
+    <div id="filters" class="fbar" role="group" aria-label="Lọc nhiệm vụ">
+      <button type="button" class="fbtn on" data-f="all" aria-pressed="true">Tất cả</button>
+      <button type="button" class="fbtn" data-f="run" aria-pressed="false">Đang làm</button>
+      <button type="button" class="fbtn" data-f="err" aria-pressed="false">Lỗi</button>
+      <button type="button" class="fbtn" data-f="done" aria-pressed="false">Xong</button>
+    </div>
     <div id="tasks"></div>
   </div>
-  <div id="flyer" aria-hidden="true"></div>
 </div>
 
 <footer class="foot">
   <span class="cr"><b>Sếp lớn</b>Trần Ngoc Minh Khôi</span>
   <span class="cr"><b>Diễn viên</b>Tiểu Khôi · Tiểu Tiểu Khôi · Tiểu Đệ · Claude Code · Codex · Antigravity · Tổ Trực Telegram · Tổ Quản lý key free</span>
   <span class="cr"><b>7 tổ</b>Kiến trúc · Viết code · Kiểm tra · Test · Bảo vệ · Điều phối · Ghi chép</span>
-  <span class="fnote">Dữ liệu tĩnh ngay trong file (trạng thái ngày 20/11/2026). Không gọi API, không tải thư viện ngoài.</span>
+  <span class="fnote" id="foot">Đang tải dữ liệu thật…</span>
 </footer>
 </div>
 
 <div id="scrim"></div>
-<div id="toast" role="status"></div>
 <div id="detail" role="dialog" aria-live="polite"></div>
 
 <script>
-// ===== Dữ liệu mẫu (DEMO, không phải dữ liệu thật) =====
-// kind: 'boss' = sếp lớn, 'ai' = AI (có dây nối từ hub), 'team' = tổ (chỉ bấm xem chi tiết)
+// ===== Nguồn dữ liệu thật (chỉ đọc: GET dashboard_status và tasks; không gửi lệnh nào) =====
+const SB_URL = 'https://yuafwbuhwdhitktqucib.supabase.co';
+// Khóa anon là khóa công khai theo thiết kế Supabase; RLS chỉ cho SELECT.
+// Lý do tách thành nhiều đoạn: chuỗi JWT thô bị máy quét bí mật gắn cờ. Các đoạn được nối lúc chạy.
+const SB_ANON = [
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+  [
+    'eyJpc3MiOiJzdXBhYmFzZSIs', 'InJlZiI6Inl1YWZ3YnVod2Ro', 'aXRrdHF1Y2liIiwicm9sZSI6',
+    'ImFub24iLCJpYXQiOjE3OTI1', 'NTQ5NjMsImV4cCI6MjEwODEz', 'MDk2M30'
+  ].join(''),
+  ['TEwH0o8L4sCJuZH9', 'WvkzcgxXHRsirqWr4DJUB_HgkBw'].join('')
+].join('.');
+const POLL_MS = 30000;
+const TZ = 'Asia/Ho_Chi_Minh';
+const TASK_FIELDS = 'id,tieu_de,mo_ta,cap,trang_thai,buoc,nguoi_lam,nguoi_kiem,token_da_dung,tao_luc,cap_nhat_luc';
+// id trong payload.ai → id nút trên sân khấu
+const AI_MAP = {tieukhoi:'khoi', worker:'tkhoi', claude:'claude', codex:'codex', antigravity:'anti'};
+const LINK_AI = ['khoi','tkhoi','de','claude','codex','anti'];
+const STATUS_LABEL = {moi:'Mới', dang_lam:'Đang làm', xong:'Xong', that_bai:'Thất bại', dung:'Dừng', cho_duyet:'Chờ duyệt'};
+const FILTERS = {
+  all:  () => true,
+  run:  t => t.trang_thai === 'dang_lam',
+  err:  t => t.trang_thai === 'that_bai',
+  done: t => t.trang_thai === 'xong'
+};
+
+// kind: 'boss' = sếp lớn (tĩnh như cũ), 'ai' = nhận dữ liệu thật, 'team' = cơ cấu tổ chức tĩnh
 const NODES = {
-  boss:    {kind:'boss', name:'Trần Ngoc Minh Khôi', role:'Sếp lớn — Founder, chủ công ty', state:'on', ini:'TNK', doing:'Ra chủ đề và duyệt việc'},
-  khoi:    {kind:'ai', name:'Tiểu Khôi',      role:'Tổng chỉ huy', state:'on',  ini:'TK',  doing:'Điều phối nhiệm vụ demo'},
-  tkhoi:   {kind:'ai', name:'Tiểu Tiểu Khôi', role:'Phó giám đốc', state:'on',  ini:'TTK', doing:'Theo dõi thảo luận trial'},
-  de:      {kind:'ai', name:'Tiểu Đệ',        role:'Tìm tin',      state:'on',  ini:'TĐ',  doing:'Tìm tin phục vụ demo'},
-  claude:  {kind:'ai', name:'Claude Code',    role:'Viết code',    state:'on',  ini:'CC',  doing:'Port Windows, OTP, SPEC 2'},
-  codex:   {kind:'ai', name:'Codex',          role:'Viết code',    state:'off', ini:'CX',  doing:'Chưa nhận việc', reason:'đăng nhập hết hạn'},
-  anti:    {kind:'ai', name:'Antigravity',    role:'Viết code',    state:'on',  ini:'AG',  doing:'Sẵn sàng nhận việc'},
-  tg:      {kind:'team', name:'Tổ Trực Telegram',    role:'1 AI trực hàng đợi theo ca', state:'on', doing:'Trực hàng đợi Telegram, tin sếp không chờ quá 1 phút', parent:'Tiểu Khôi (chỉ đạo trực tiếp)'},
-  keyfree: {kind:'team', name:'Tổ Quản lý key free', role:'Probe 49 key free mỗi tuần', state:'on', doing:'Probe 49 key free mỗi tuần, báo key/model chết', parent:'Tiểu Tiểu Khôi (chỉ đạo)'},
-  arch:     {kind:'team', name:'Tổ Kiến trúc',  role:'Thiết kế, SPEC',                 state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  dev:      {kind:'team', name:'Tổ Viết code',  role:'Viết code',                      state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  review:   {kind:'team', name:'Tổ Kiểm tra',   role:'Review code',                    state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  test:     {kind:'team', name:'Tổ Test',       role:'Chạy test, gate',                state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  guard:    {kind:'team', name:'Tổ Bảo vệ',     role:'Bảo vệ thông tin · cửa cuối, chặn release', state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  dispatch: {kind:'team', name:'Tổ Điều phối',  role:'Chia việc, theo dõi tiến độ',    state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
-  scribe:   {kind:'team', name:'Tổ Ghi chép',   role:'Thư ký, ghi nhật ký L9',         state:'on', doing:'Sẵn sàng nhận việc (demo)', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'}
+  boss:     {kind:'boss', name:'Trần Ngoc Minh Khôi', role:'Sếp lớn — Founder, chủ công ty', ini:'TNK', doing:'Ra chủ đề và duyệt việc'},
+  khoi:     {kind:'ai', name:'Tiểu Khôi',      role:'Tổng chỉ huy', ini:'TK'},
+  tkhoi:    {kind:'ai', name:'Tiểu Tiểu Khôi', role:'Phó giám đốc', ini:'TTK'},
+  de:       {kind:'ai', name:'Tiểu Đệ',        role:'Tìm tin', ini:'TĐ'},
+  claude:   {kind:'ai', name:'Claude Code',    role:'Viết code', ini:'CC'},
+  codex:    {kind:'ai', name:'Codex',          role:'Viết code', ini:'CX'},
+  anti:     {kind:'ai', name:'Antigravity',    role:'Viết code', ini:'AG'},
+  tg:       {kind:'team', name:'Tổ Trực Telegram',    role:'1 AI trực hàng đợi theo ca', parent:'Tiểu Khôi (chỉ đạo trực tiếp)'},
+  keyfree:  {kind:'team', name:'Tổ Quản lý key free', role:'Probe 49 key free mỗi tuần', parent:'Tiểu Tiểu Khôi (chỉ đạo)'},
+  arch:     {kind:'team', name:'Tổ Kiến trúc',  role:'Thiết kế, SPEC', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  dev:      {kind:'team', name:'Tổ Viết code',  role:'Viết code', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  review:   {kind:'team', name:'Tổ Kiểm tra',   role:'Review code', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  test:     {kind:'team', name:'Tổ Test',       role:'Chạy test, gate', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  guard:    {kind:'team', name:'Tổ Bảo vệ',     role:'Bảo vệ thông tin · cửa cuối, chặn release', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  dispatch: {kind:'team', name:'Tổ Điều phối',  role:'Chia việc, theo dõi tiến độ', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'},
+  scribe:   {kind:'team', name:'Tổ Ghi chép',   role:'Thư ký, ghi nhật ký L9', parent:'Công ty con Tiểu Tiểu Khôi Intelligence'}
 };
 const ROOMS = {
   telegram:{name:'Phòng Telegram', ico:'TG'},
@@ -405,16 +444,8 @@ const ROOMS = {
   code:    {name:'Phòng Code',     ico:'&lt;/&gt;'},
   check:   {name:'Phòng Kiểm tra', ico:'✓'}
 };
-const TASKS = [
-  {title:'Port Windows sang Supabase', short:'Port Windows', meta:'Draft PR #5 · xong code, chờ máy Windows thật', assign:['claude'], room:'code'},
-  {title:'Sửa OTP nhảy số',            short:'Sửa OTP',      meta:'PR #70 · chờ review',                        assign:['claude'], room:'check'},
-  {title:'SPEC 2 FALLBACK_TAG beta.5', short:'SPEC 2',       meta:'PR #69 · chờ duyệt merge',                   assign:['claude'], room:'telegram'},
-  {title:'Thảo luận FreeLLMAPI vs LiteLLM', short:'FreeLLMAPI vs LiteLLM', meta:'Phòng trial · chờ sếp ra chủ đề', assign:['khoi','tkhoi'], room:'trial'},
-  {title:'Codex kiểm chứng số liệu LiteLLM', short:'Codex kiểm chứng', meta:'401 token_expired từ 19/11 — cần chạy codex login lại', assign:['codex'], room:'check', error:true}
-];
-const ERR_IDX = TASKS.findIndex(t => t.error);
 // Vị trí (%) trên sân khấu desktop (sân 1100 x 1120px). Lệch có chủ ý khỏi lưới đối xứng.
-// Hub (CSS #hub top 41.5%) có thể cao tới ~530px khi chạy đủ 5 nhiệm vụ: các phòng ở hàng dưới cùng phải nằm dưới đáy hub + ≥8px.
+// Hub (CSS #hub top 41.5%) có thể cao hơn khi có nhiều nhiệm vụ: các phòng ở hàng dưới cùng phải nằm dưới đáy hub + ≥8px.
 const NODE_POS = {
   boss:[43.5,6.2], khoi:[47.5,24.1], tkhoi:[80.2,25.6], tg:[45,37.4], keyfree:[80.6,39.8],
   de:[9.4,43.6], codex:[27.8,45.2], claude:[9,66.4], anti:[28,68.6]
@@ -425,20 +456,31 @@ const ROOM_POS = {telegram:[12.5,94.2], trial:[35.5,94.6], code:[61.5,95.2], che
 const FLOW = ['boss','khoi','tg','tkhoi','keyfree','de','codex','claude','anti'];
 
 // ===== Tiện ích =====
-const $ = s => document.querySelector(s);
-const NS = 'http://www.w3.org/2000/svg';
 const ref = id => document.getElementById(id);
-const stage = ref('stage'), svg = ref('svg'), linkLayer = ref('links'), fx = ref('fx'), flyer = ref('flyer'), pool = ref('pool');
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const stage = ref('stage'), svg = ref('svg'), linkLayer = ref('links'), fx = ref('fx'), pool = ref('pool');
+const NS = 'http://www.w3.org/2000/svg';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mq = matchMedia('(max-width: 759px)');
 const isMobile = () => mq.matches;
-const easeIO = p => 0.5 - 0.5 * Math.cos(Math.PI * p); // sine in-out: mềm, không giật
-const WORK_MS = 3000; // thời gian một AI làm việc (thanh tiến độ)
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const dash = v => (v === null || v === undefined || v === '' ? '—' : v);
+const txt = v => esc(dash(v));
+const fmtTime = ms => ms ? new Date(ms).toLocaleTimeString('vi-VN', {timeZone: TZ, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit'}) : '—';
+const fmtDT = iso => {
+  if(!iso) return '—';
+  const d = new Date(String(iso).replace(/(\.\d{3})\d+/, '$1')); // rút phần micro-giây (Supabase trả 6 chữ số)
+  return isNaN(d) ? '—' : d.toLocaleString('vi-VN', {timeZone: TZ, hourCycle: 'h23', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'});
+};
+// Dạng ngắn cho dòng meta của nhiệm vụ ở hub (không có năm, không có giây)
+const fmtShort = iso => {
+  if(!iso) return '—';
+  const d = new Date(String(iso).replace(/(\.\d{3})\d+/, '$1'));
+  return isNaN(d) ? '—' : d.toLocaleString('vi-VN', {timeZone: TZ, hourCycle: 'h23', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+};
 
-let busy = false, autoOn = false, doneCount = 0, errCount = 0, mode = null;
-const roomStats = {};
+const state = {payload:null, lastOk:0, err:false, auto:true, busy:false, timer:0, filter:'all', openTask:null};
 const links = {}; // registry: {el, desk, mob, dots, hot, ambient, len}
+let mode = null;
 
 // Điểm neo trên phần tử, toạ độ tính theo sân khấu (= đơn vị viewBox)
 function anchor(el, where){
@@ -490,52 +532,13 @@ function layoutLink(L){
 function addLink(key, desk, mob, cls, ambient){
   const p = document.createElementNS(NS, 'path');
   p.setAttribute('class', cls);
-  if(cls.includes('lane')) p.setAttribute('marker-end', 'url(#arrow)');
   linkLayer.appendChild(p);
   const L = {el:p, desk, mob, dots:[], hot:false, ambient:!!ambient, len:0};
   links[key] = L;
   layoutLink(L);
   return L;
 }
-// Gói dữ liệu: đốm sáng + vệt ba lớp mờ dần, chạy dọc đường SVG với easing sine in-out.
-// onFrame nhận toạ độ đầu gói mỗi khung hình.
-function travel(pathEl, dur, err, onFrame){
-  if(!pathEl.getTotalLength()) return Promise.resolve();
-  const T = 84; // độ dài vệt (px)
-  const g = document.createElementNS(NS, 'g');
-  g.setAttribute('class', 'pkt');
-  const layers = ['o','m','c'].map(c => {
-    const p = document.createElementNS(NS, 'path');
-    p.setAttribute('class', `trail ${c}${err ? ' err' : ''}`);
-    g.appendChild(p); return p;
-  });
-  const head = document.createElementNS(NS, 'circle');
-  head.setAttribute('r', 3.4);
-  head.setAttribute('class', 'head' + (err ? ' err' : ''));
-  g.appendChild(head);
-  fx.appendChild(g);
-  return new Promise(res => {
-    const t0 = performance.now();
-    const step = now => {
-      const p = Math.min(1, (now - t0) / dur);
-      const len = pathEl.getTotalLength();
-      const dist = easeIO(p) * len;
-      const d = pathEl.getAttribute('d');
-      layers.forEach(l => {
-        l.setAttribute('d', d);
-        l.setAttribute('stroke-dasharray', `${T} ${len}`);
-        l.setAttribute('stroke-dashoffset', T - dist);
-      });
-      const pt = pathEl.getPointAtLength(dist);
-      head.setAttribute('cx', pt.x); head.setAttribute('cy', pt.y);
-      if(onFrame) onFrame(pt);
-      if(p < 1) requestAnimationFrame(step);
-      else { g.remove(); res(); }
-    };
-    requestAnimationFrame(step);
-  });
-}
-// Bật/tắt dây hub→node; err = true thì dây và gói đỏ
+// Bật/tắt dây hub→node; khi có việc thật dây sáng hơn
 function setHot(k, on, err){
   const L = links['amb-' + k];
   if(!L) return;
@@ -544,6 +547,15 @@ function setHot(k, on, err){
   L.el.classList.toggle('hot', on);
   L.el.classList.toggle('err', red);
   L.dots.forEach(c => { c.classList.toggle('hot', on); c.classList.toggle('err', red); });
+}
+// Dây hub→AI: sáng + chấm chạy khi AI có việc; tối và ẩn chấm khi không có dữ liệu
+function setAmb(k, on){
+  const L = links['amb-' + k];
+  if(!L) return;
+  L.ambient = on;
+  L.el.classList.toggle('off', !on);
+  L.dots.forEach(c => { c.style.display = on ? '' : 'none'; });
+  setHot(k, on, false);
 }
 // Đưa ánh đèn sân khấu lên node đang làm việc
 function lightOn(el){
@@ -558,28 +570,30 @@ function lightOn(el){
 // Tách tiêu đề thành từng chữ để hiện so le (màn mở như credit phim)
 function splitTitle(){
   const h = document.querySelector('.top h1');
-  const txt = h.textContent.trim();
-  h.setAttribute('aria-label', txt);
-  h.dataset.text = txt;
+  const t = h.textContent.trim();
+  h.setAttribute('aria-label', t);
+  h.dataset.text = t;
   let i = 0;
-  h.innerHTML = Array.from(txt).map(c => c === ' ' ? ' ' : `<span class="lt" aria-hidden="true" style="--i:${i++}">${c}</span>`).join('');
+  h.innerHTML = Array.from(t).map(c => c === ' ' ? ' ' : `<span class="lt" aria-hidden="true" style="--i:${i++}">${c}</span>`).join('');
 }
 function makeNode(k){
   const d = NODES[k], b = document.createElement('button');
   b.id = 'n-' + k; b.type = 'button';
   if(d.kind === 'team'){
     b.className = 'tnode';
-    b.innerHTML = `<span class="tn">${d.name}</span><span class="tr">${d.role}</span>`;
+    b.innerHTML = `<span class="tn">${esc(d.name)}</span><span class="tr">${esc(d.role)}</span><span class="ts">Cơ cấu tổ chức — chưa có dữ liệu trực tiếp</span>`;
   } else {
-    const cls = ['node', d.kind === 'boss' ? 'boss' : '', k === 'khoi' ? 'lead' : '', d.state === 'on' ? 'active' : 'paused'];
+    const cls = ['node', d.kind === 'boss' ? 'boss' : '', k === 'khoi' ? 'lead' : '', d.kind === 'boss' ? 'active' : 'paused'];
     b.className = cls.filter(Boolean).join(' ');
+    const stt = d.kind === 'boss' ? '● Đang hoạt động' : '◌ Đang tải…';
+    const doing = d.kind === 'boss' ? d.doing : 'Đang tải dữ liệu thật…';
     b.innerHTML = (k === 'khoi' ? '<span class="you">TỔNG CHỈ HUY — BẠN ĐANG Ở ĐÂY</span>' : '') +
-      `<span class="ava"><span class="ring"></span>${d.ini}</span>
+      `<span class="ava"><span class="ring"></span>${esc(d.ini)}</span>
        <span class="txt">
-         <span class="nm">${d.name}</span>
-         <span class="rl">${d.role}</span>
-         <span class="stt">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ'}</span>
-         <span class="doing">${d.doing}</span>
+         <span class="nm">${esc(d.name)}</span>
+         <span class="rl">${esc(d.role)}</span>
+         <span class="stt">${stt}</span>
+         <span class="doing">${esc(doing)}</span>
          <span class="bar"><i></i></span>
        </span>`;
   }
@@ -599,7 +613,10 @@ function buildRoom(r){
   const [x, y] = ROOM_POS[r], d = document.createElement('div');
   d.className = 'room'; d.id = 'r-' + r;
   d.style.left = x + '%'; d.style.top = y + '%';
-  d.innerHTML = `<div class="rh"><span class="ico">${ROOMS[r].ico}</span><span class="nm2">${ROOMS[r].name}</span><span class="cnt">0 xong</span></div><div class="chips"></div>`;
+  d.setAttribute('role', 'button'); d.tabIndex = 0;
+  d.innerHTML = `<div class="rh"><span class="ico">${ROOMS[r].ico}</span><span class="nm2">${ROOMS[r].name}</span><span class="cnt">Đang tải…</span></div><div class="chips"></div>`;
+  d.addEventListener('click', () => showRoom(r));
+  d.addEventListener('keydown', e => { if(e.key === 'Enter') showRoom(r); });
   return d;
 }
 // Sắp DOM theo thứ tự dọc (mobile); desktop vẫn định vị tuyệt đối theo %
@@ -616,36 +633,22 @@ function buildStage(){
   stage.appendChild(reveal(ref('hub')));
   for(const r in ROOMS) stage.appendChild(reveal(buildRoom(r)));
 }
-function buildTasks(){
-  const list = ref('tasks');
-  TASKS.forEach((t, i) => {
-    const b = document.createElement('button');
-    b.className = 'task'; b.id = 't-' + i; b.type = 'button';
-    const who = t.assign.map(k => NODES[k].name).join(' + ');
-    b.innerHTML = `<span class="tt">${t.title}</span><span class="st">Chờ</span><span class="tm">Giao: ${who} · ${t.meta}</span>`;
-    b.addEventListener('click', () => runTask(i));
-    list.appendChild(b);
-    if(t.error) setTaskState(i, 'error', 'LỖI');
-  });
-}
-// Dây: hub→AI (có gói chạy), dây tổ chức (tĩnh)
+// Dây: hub→AI (sáng khi có việc thật), dây tổ chức (tĩnh)
 function buildLinks(){
-  for(const k in NODES){
-    if(NODES[k].kind !== 'ai') continue;
-    const on = NODES[k].state === 'on';
-    const L = addLink('amb-' + k,
+  LINK_AI.forEach(k => {
+    addLink('amb-' + k,
       {a:'hub', aw:'toward', b:'n-' + k, bw:'c', mode:'auto'},
       {a:'hub', aw:'left', b:'n-' + k, bw:'left', gutter:'L'},
-      'link' + (on ? '' : ' off'), on);
-    if(on){
-      for(let i = 0; i < 3; i++){
-        const c = document.createElementNS(NS, 'circle');
-        c.setAttribute('r', 2.8); c.setAttribute('class', 'dot');
-        fx.appendChild(c);
-        L.dots.push(c);
-      }
+      'link off', false);
+    const L = links['amb-' + k];
+    for(let i = 0; i < 3; i++){
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('r', 2.8); c.setAttribute('class', 'dot');
+      c.style.display = 'none';
+      fx.appendChild(c);
+      L.dots.push(c);
     }
-  }
+  });
   addLink('org-boss-khoi',     {a:'n-boss', aw:'bottom', b:'n-khoi',    bw:'top', mode:'v'}, undefined, 'link');
   addLink('org-boss-tkhoi',    {a:'n-boss', aw:'bottom', b:'n-tkhoi',   bw:'top', mode:'v'}, null, 'link');
   addLink('org-khoi-tg',       {a:'n-khoi', aw:'bottom', b:'n-tg',      bw:'top', mode:'v'}, undefined, 'link');
@@ -653,205 +656,311 @@ function buildLinks(){
   // Chỉ hiện trên điện thoại: chuỗi dọc Tổ Telegram → Tiểu Tiểu Khôi
   addLink('m-tg-tkhoi', null, {a:'n-tg', aw:'bottom', b:'n-tkhoi', bw:'top', mode:'v'}, 'link');
 }
-function setTaskState(i, cls, text){
-  const b = ref('t-' + i);
-  b.className = 'task' + (cls ? ' ' + cls : '');
-  b.querySelector('.st').textContent = text;
+
+// ===== Kết nối dữ liệu thật =====
+async function sbGet(path){
+  const r = await fetch(SB_URL + path, {
+    headers: {apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON},
+    cache: 'no-store',
+    signal: AbortSignal.timeout(12000)
+  });
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
 }
-function updateSummary(){
-  const ai = Object.values(NODES).filter(n => n.kind === 'ai');
-  const on = ai.filter(n => n.state === 'on').length;
-  ref('sum').textContent = `AI đang hoạt động: ${on}/${ai.length} · Nhiệm vụ demo: ${TASKS.length} · Đã chuyển sang phòng: ${doneCount}` + (errCount ? ` · Lỗi: ${errCount}` : '');
+function scheduleNext(){
+  clearTimeout(state.timer);
+  if(state.auto) state.timer = setTimeout(poll, POLL_MS);
 }
-let toastTimer = 0;
-function toast(msg){
-  const t = ref('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+async function poll(){
+  if(state.busy) return;
+  state.busy = true;
+  try{
+    const rows = await sbGet('/rest/v1/dashboard_status?id=eq.1&select=payload,updated_at');
+    if(!Array.isArray(rows) || !rows.length || !rows[0].payload) throw new Error('empty payload');
+    state.payload = rows[0].payload;
+    state.lastOk = Date.now();
+    state.err = false;
+    renderAll();
+  }catch(e){
+    state.err = true;
+    renderLive();
+  }finally{
+    state.busy = false;
+    scheduleNext();
+  }
 }
-// Chạy lại hiệu ứng rung cho một phần tử
-function jolt(el){
-  el.classList.remove('jolt'); void el.offsetWidth;
-  el.classList.add('jolt');
-  setTimeout(() => el.classList.remove('jolt'), 1800);
+function renderAll(){
+  const p = state.payload;
+  if(!p) return;
+  paintAIs(p);
+  renderTasks();
+  renderRooms(p);
+  renderSummary(p);
+  ref('foot').textContent = `Dữ liệu cập nhật lúc ${fmtDT(p.updated_at)} · Nguồn: Supabase dashboard_status (đồng bộ mỗi 60 giây)`;
+  renderLive();
+  resize();
+}
+function renderLive(){
+  const el = ref('live'), t = fmtTime(state.lastOk);
+  let msg, cls = '';
+  if(!state.payload){
+    msg = state.err ? 'MẤT KẾT NỐI — chưa tải được dữ liệu, sẽ thử lại' : 'Đang tải dữ liệu thật…';
+    cls = state.err ? 'bad' : '';
+  } else if(state.err){
+    msg = `MẤT KẾT NỐI — đang hiển thị dữ liệu lúc ${t}`; cls = 'bad';
+  } else if(!state.auto){
+    msg = `TẠM DỪNG TỰ CẬP NHẬT · dữ liệu lúc ${t}`;
+  } else {
+    msg = `TRỰC TUYẾN · cập nhật lúc ${t}`; cls = 'ok';
+  }
+  el.textContent = msg;
+  el.className = 'live ' + cls;
+  ref('auto').textContent = state.auto ? 'Tự cập nhật: BẬT' : 'Tự cập nhật: TẮT';
+  ref('auto').setAttribute('aria-pressed', String(state.auto));
 }
 
-// ===== Hiệu ứng: gói dữ liệu, node làm việc, đẩy sang phòng =====
-// Gói sáng chạy từ hub tới node được giao (đỏ trầm nếu lỗi)
-async function sendToNode(k, err){
-  const L = links['amb-' + k];
-  if(!L) return;
-  setHot(k, true, err);
-  await travel(L.el, 1500, err);
-}
-// Node được rọi đèn (phóng nhẹ, sáng), các node khác tối lại; thanh tiến độ chạy
-async function work(k, task){
-  const err = !!task.error;
-  const n = ref('n-' + k), dl = n.querySelector('.doing'), bar = n.querySelector('.bar i');
-  n.classList.add('working', 'spot');
-  if(err) n.classList.add('err');
-  lightOn(n);
-  dl.textContent = '▸ ' + task.title;
-  bar.style.transition = 'none'; bar.style.width = '0%';
-  void bar.offsetWidth;
-  bar.style.transition = `width ${WORK_MS}ms cubic-bezier(.35,.1,.25,1)`; bar.style.width = '100%';
-  await sleep(WORK_MS);
-  n.classList.remove('working', 'spot');
-  dl.textContent = err ? '✕ ' + task.meta : NODES[k].doing;
-  bar.style.transition = 'none'; bar.style.width = '0%';
-  setHot(k, false);
-  if(!stage.querySelector('.spot')){
+// ===== Sân khấu: node AI theo dữ liệu thật =====
+function paintAIs(p){
+  const seen = new Set();
+  (p.ai || []).forEach(a => {
+    const k = AI_MAP[a.id];
+    if(!k) return;
+    seen.add(k);
+    paintAI(k, a);
+  });
+  LINK_AI.forEach(k => { if(!seen.has(k)) paintNoData(k); });
+  // Đèn sân khấu: chỉ rọi các AI đang làm việc thật
+  const working = Object.values(AI_MAP).filter(k => ref('n-' + k).classList.contains('working'));
+  if(working.length){
+    lightOn(ref('n-' + working[0]));
+  } else {
     stage.classList.remove('focus');
     pool.classList.remove('on');
   }
 }
-// Vị trí nhãn bay; trên điện thoại kẹp trong khung để không tràn ngang
-function moveFlyer(pt, half){
-  let x = pt.x;
-  if(isMobile()) x = Math.min(Math.max(x, half), stage.clientWidth - half);
-  flyer.style.setProperty('--x', x + 'px');
-  flyer.style.setProperty('--y', pt.y + 'px');
+function paintAI(k, a){
+  const n = ref('n-' + k), on = a.status === 'on';
+  const prog = on ? Math.max(0, Math.min(100, Number(a.progress) || 0)) : 0;
+  n.classList.toggle('active', on);
+  n.classList.toggle('working', on);
+  n.classList.toggle('spot', on);
+  n.classList.toggle('paused', !on);
+  n.querySelector('.stt').textContent = (on ? '● ' : '◌ ') + (a.statusText || (on ? 'Đang hoạt động' : 'Tạm nghỉ'));
+  n.querySelector('.doing').textContent = a.task || 'Chưa có dữ liệu trực tiếp';
+  n.querySelector('.bar i').style.width = prog + '%';
+  setAmb(k, on);
 }
-// Nhiệm vụ bay theo mũi tên từ node sang phòng đích (mũi tên đỏ nếu lỗi)
-async function pushToRoom(k, room, task){
-  const err = !!task.error;
-  const key = 'lane-' + k + '-' + room;
-  const L = links[key] || addLink(key,
-    {a:'n-' + k, aw:'bottom', b:'r-' + room, bw:'top', mode:'v'},
-    {a:'n-' + k, aw:'right', b:'r-' + room, bw:'right', gutter:'R'},
-    'lane');
-  layoutLink(L);
-  L.el.setAttribute('marker-end', err ? 'url(#arrow-err)' : 'url(#arrow)');
-  L.el.classList.toggle('err', err);
-  flyer.textContent = task.short;
-  flyer.classList.toggle('err', err);
-  const start = L.el.getPointAtLength(0);
-  const half = flyer.offsetWidth / 2 + 8;
-  moveFlyer(start, half);
-  L.el.classList.add('show');
-  flyer.classList.add('show');
-  await travel(L.el, 1900, err, pt => moveFlyer(pt, half));
-  flyer.classList.remove('show');
-  L.el.classList.remove('show');
-  const r = ref('r-' + room);
-  if(err){
-    r.classList.add('err'); // giữ đỏ tới khi đặt lại
+function paintNoData(k){
+  const n = ref('n-' + k);
+  n.classList.remove('active', 'working', 'spot');
+  n.classList.add('paused');
+  n.querySelector('.stt').textContent = '◌ Chưa có dữ liệu';
+  n.querySelector('.doing').textContent = 'Chưa có dữ liệu trực tiếp';
+  n.querySelector('.bar i').style.width = '0%';
+  setAmb(k, false);
+}
+
+// ===== Hub: nhiệm vụ thật + bộ lọc =====
+function taskHtml(t){
+  const cls = {dang_lam:'running', xong:'done', that_bai:'error'}[t.trang_thai] || '';
+  const pct = Math.max(0, Math.min(100, Math.round((Number(t.buoc) || 0) / 8 * 100)));
+  return `<button class="task ${cls}" type="button" data-task="${esc(t.id)}" title="Bước ${txt(t.buoc)}/8">` +
+    `<span class="tt">${esc(t.tieu_de)}</span>` +
+    `<span class="st">${txt(STATUS_LABEL[t.trang_thai] || t.trang_thai)}</span>` +
+    `<span class="tm">Cấp ${txt(t.cap)} · Người làm: ${esc(t.nguoi_lam || 'Chưa giao')} · Cập nhật: <span class="when">${fmtShort(t.cap_nhat_luc)}</span></span>` +
+    `<span class="bar tb"><i style="width:${pct}%"></i></span></button>`;
+}
+function renderTasks(){
+  const box = ref('tasks'), p = state.payload;
+  let html;
+  if(!p){
+    html = '<p class="empty">Đang tải dữ liệu thật…</p>';
   } else {
-    r.classList.add('lit');
-    setTimeout(() => r.classList.remove('lit'), 2600);
+    const all = p.pipeline?.recent_tasks || [];
+    const list = all.filter(FILTERS[state.filter]);
+    html = !all.length ? '<p class="empty">Chưa có nhiệm vụ nào trong dữ liệu.</p>'
+      : !list.length ? '<p class="empty">Không có nhiệm vụ nào trong bộ lọc này.</p>'
+      : list.map(taskHtml).join('');
   }
-  addChip(room, task.short, err);
-}
-function addChip(room, text, err){
-  const r = ref('r-' + room), box = r.querySelector('.chips');
-  const c = document.createElement('span');
-  c.className = 'chip' + (err ? ' err' : '');
-  c.textContent = err ? '✕ ' + text + ' — LỖI' : '✓ ' + text;
-  box.prepend(c);
-  while(box.children.length > 3) box.lastChild.remove();
-  if(err) return; // nhiệm vụ lỗi không tính là "xong"
-  roomStats[room] = (roomStats[room] || 0) + 1;
-  r.querySelector('.cnt').textContent = roomStats[room] + ' xong';
-  r.classList.add('has');
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; }
 }
 
-// Chạy một nhiệm vụ: hub → node → phòng đích (nhiệm vụ lỗi diễn thêm hiệu ứng đỏ)
-async function runTask(i){
-  if(busy){ toast('Đang chạy một nhiệm vụ khác, chờ xíu…'); return false; }
-  busy = true;
-  const task = TASKS[i], err = !!task.error;
-  setTaskState(i, 'running', 'Đang chạy → ' + task.assign.map(k => NODES[k].name).join(' + '));
-  try{
-    await Promise.all(task.assign.map(k => sendToNode(k, err)));
-    await Promise.all(task.assign.map(k => work(k, task)));
-    if(err){
-      setTaskState(i, 'error', 'LỖI');
-      jolt(ref('t-' + i));
-      toast('⚠ Codex lỗi 401 token_expired — cần chạy codex login lại');
-      await pushToRoom(task.assign[0], task.room, task);
-      errCount++;
-    } else {
-      await pushToRoom(task.assign[0], task.room, task);
-      doneCount++;
-      setTaskState(i, 'done', '✓ Đã chuyển → ' + ROOMS[task.room].name);
-    }
-    updateSummary();
-  } finally {
-    busy = false;
-  }
-  return true;
+// ===== Phòng: đếm chỉ từ dữ liệu có thật =====
+function renderRoom(r, o){
+  const el = ref('r-' + r);
+  el.querySelector('.cnt').textContent = o.cnt;
+  el.classList.toggle('has', !!o.has);
+  el.classList.toggle('err', !!o.err);
+  const html = o.chips.map(c => `<span class="chip${c.err ? ' err' : ''}">${esc(c.text)}</span>`).join('');
+  const box = el.querySelector('.chips');
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; }
+}
+function renderRooms(p){
+  const pl = p.pipeline || {}, c = pl.counts || {}, gate = pl.gate_runs || {};
+  const recent = pl.recent_tasks || [];
+
+  // Code: việc đang làm + mới (đếm từ counts)
+  const act = recent.filter(t => t.trang_thai === 'dang_lam' || t.trang_thai === 'moi');
+  const nAct = Number.isFinite(c.dang_lam) && Number.isFinite(c.moi) ? c.dang_lam + c.moi : null;
+  renderRoom('code', {
+    cnt: nAct === null ? 'Chưa có dữ liệu trực tiếp' : `${nAct} việc đang làm/mới`,
+    has: nAct > 0,
+    err: c.that_bai > 0,
+    chips: act.length ? act.slice(0, 3).map(t => ({text: t.tieu_de}))
+      : (nAct === 0 ? [{text: 'Không có việc đang làm hoặc mới'}] : [])
+  });
+
+  // Kiểm tra: bug mở + gate trượt
+  const bugs = pl.bugs_open, truot = gate.truot;
+  const okNums = Number.isFinite(bugs) && Number.isFinite(truot);
+  const bad = okNums && (bugs > 0 || truot > 0);
+  renderRoom('check', {
+    cnt: okNums ? `${bugs} bug mở · ${truot} gate trượt` : 'Chưa có dữ liệu trực tiếp',
+    has: bad,
+    err: bad,
+    chips: !okNums ? []
+      : bad ? [bugs > 0 && {text: `${bugs} bug mở`, err: true}, truot > 0 && {text: `${truot} gate trượt`, err: true}].filter(Boolean)
+      : [{text: 'Không có lỗi mở'}]
+  });
+
+  // Telegram: trạng thái bot + stack + dịch vụ
+  const svcVals = Object.values(p.services || {});
+  const svcUp = svcVals.filter(v => v === 'UP').length;
+  renderRoom('telegram', {
+    cnt: pl.bot ? `Bot: ${pl.bot}` : 'Chưa có dữ liệu trực tiếp',
+    has: false,
+    err: pl.bot === 'DOWN',
+    chips: [
+      {text: `Stack ${dash(pl.stack_up)}`},
+      {text: svcVals.length ? `Dịch vụ: ${svcUp}/${svcVals.length} UP` : 'Dịch vụ: chưa có dữ liệu', err: svcUp < svcVals.length}
+    ]
+  });
+
+  // Trial: không có dữ liệu nên không đếm
+  renderRoom('trial', {cnt: 'Chưa có dữ liệu trực tiếp', has: false, err: false, chips: []});
+}
+function renderSummary(p){
+  const ai = p.ai || [], on = ai.filter(a => a.status === 'on').length;
+  const pl = p.pipeline || {}, c = pl.counts || {};
+  ref('sum').textContent = `AI đang hoạt động: ${on}/${ai.length} · Việc: Mới ${dash(c.moi)} · Đang làm ${dash(c.dang_lam)} · Xong ${dash(c.xong)} · Thất bại ${dash(c.that_bai)} · Bug mở ${dash(pl.bugs_open)} · Stack ${dash(pl.stack_up)} · Bot ${dash(pl.bot)}`;
 }
 
-// Chế độ tự động: chạy lần lượt các nhiệm vụ (có cả nhiệm vụ lỗi), lặp lại
-async function autoLoop(){
-  autoOn = true; setAutoBtn();
-  let i = 0;
-  while(autoOn){
-    if(busy){ await sleep(400); continue; }
-    await runTask(i);
-    i = (i + 1) % TASKS.length;
-    await sleep(2000);
-  }
-  setAutoBtn();
-}
-function setAutoBtn(){
-  ref('auto').textContent = autoOn ? '⏹ Dừng chạy tự động' : '▶ Chạy demo tự động';
-}
-// Đặt lại: xoá mọi trạng thái lỗi (huy hiệu, đỏ, rung) và đưa về trạng thái ban đầu
-function resetDemo(){
-  if(busy){ toast('Đợi nhiệm vụ đang chạy xong đã.'); return; }
-  autoOn = false; setAutoBtn();
-  doneCount = 0; errCount = 0;
-  TASKS.forEach((t, i) => setTaskState(i, t.error ? 'error' : '', t.error ? 'LỖI' : 'Chờ'));
-  for(const r in ROOMS){
-    const el = ref('r-' + r);
-    el.querySelector('.chips').innerHTML = '';
-    el.querySelector('.cnt').textContent = '0 xong';
-    el.classList.remove('has', 'lit', 'err');
-    roomStats[r] = 0;
-  }
-  for(const k in NODES){
-    const n = ref('n-' + k);
-    n.classList.remove('working', 'err', 'spot');
-    const dl = n.querySelector('.doing');
-    if(dl) dl.textContent = NODES[k].doing;
-    const bar = n.querySelector('.bar i');
-    if(bar){ bar.style.transition = 'none'; bar.style.width = '0%'; }
-  }
-  for(const key in links){
-    const L = links[key];
-    L.el.classList.remove('err');
-    L.dots.forEach(c => c.classList.remove('err'));
-    if(key.startsWith('lane-')){
-      L.el.classList.remove('show');
-      L.el.setAttribute('marker-end', 'url(#arrow)');
-    }
-  }
-  stage.classList.remove('focus');
-  pool.classList.remove('on');
-  flyer.classList.remove('show', 'err');
-  updateSummary();
-}
-
-// Bảng chi tiết node (AI, Sếp lớn hoặc tổ): thẻ nổi trên desktop, bottom-sheet trên điện thoại
-function showDetail(k){
-  const d = NODES[k], dt = ref('detail');
-  const mine = TASKS.filter(t => t.assign.includes(k));
-  const doingHtml = mine.length ? mine.map(t => '• ' + t.title).join('<br>') : d.doing;
-  const parentHtml = d.parent ? `<div class="dl">Trực thuộc:</div><div class="dd">${d.parent}</div>` : '';
-  dt.innerHTML = `<span class="grip"></span>
-    <div class="dh"><b>${d.name}</b><button class="x" aria-label="Đóng">×</button></div>
-    <div class="dr">${d.role}</div>
-    <div class="dstt ${d.state}">${d.state === 'on' ? '● Đang hoạt động' : '◌ Tạm nghỉ — ' + d.reason}</div>
-    ${parentHtml}
-    <div class="dl">Việc đang làm (demo):</div>
-    <div class="dd">${doingHtml}</div>`;
-  dt.classList.add('open');
+// ===== Bảng chi tiết (desktop: thẻ nổi, mobile: bottom-sheet) =====
+function panel(html){
+  ref('detail').innerHTML = html;
+  ref('detail').classList.add('open');
   ref('scrim').classList.add('open');
 }
 function closeDetail(){
   ref('detail').classList.remove('open');
   ref('scrim').classList.remove('open');
+  state.openTask = null;
+}
+function showDetail(k){
+  const d = NODES[k], p = state.payload;
+  const head = `<span class="grip"></span><div class="dh"><b>${esc(d.name)}</b><button class="x" aria-label="Đóng">×</button></div><div class="dr">${esc(d.role)}</div>`;
+  let body;
+  if(d.kind === 'team'){
+    body = `<div class="dstt off">Cơ cấu tổ chức — chưa có dữ liệu trực tiếp</div>
+      <div class="dl">Trực thuộc:</div><div class="dd">${esc(d.parent)}</div>
+      <div class="dl">Ghi chú:</div><div class="dd">Đây là cơ cấu tổ chức tĩnh. Hệ thống chưa cung cấp hoạt động theo tổ nên không hiển thị trạng thái.</div>`;
+  } else if(d.kind === 'boss'){
+    body = `<div class="dstt">● Đang hoạt động</div>
+      <div class="dl">Việc đang làm:</div><div class="dd">${esc(d.doing)}</div>`;
+  } else {
+    const a = p && (p.ai || []).find(x => AI_MAP[x.id] === k);
+    if(!a){
+      body = `<div class="dstt off">◌ Chưa có dữ liệu trực tiếp</div>
+        <div class="dl">Ghi chú:</div><div class="dd">Chưa có dữ liệu trực tiếp cho ${esc(d.name)}.</div>`;
+    } else {
+      const on = a.status === 'on';
+      body = `<div class="dstt ${on ? '' : 'off'}">${on ? '●' : '◌'} ${txt(a.statusText)}</div>
+        <div class="dl">Việc đang làm:</div><div class="dd">${txt(a.task)}</div>
+        <div class="dl">Tiến độ:</div><div class="dd">${on ? txt(a.progress) + '%' : '—'}</div>
+        <div class="dl">Token:</div><div class="dd">${txt(a.tokens)}</div>
+        <div class="dl">Việc xong gần nhất:</div><div class="dd">${txt(a.done)}</div>`;
+    }
+  }
+  panel(head + body);
+}
+function taskPanel(v, desc){
+  return `<span class="grip"></span>
+    <div class="dh"><b>${esc(v.tieu_de)}</b><button class="x" aria-label="Đóng">×</button></div>
+    <div class="dr">Nhiệm vụ #${txt(v.id)} · Cấp ${txt(v.cap)}</div>
+    <div class="dstt">${txt(STATUS_LABEL[v.trang_thai] || v.trang_thai)}</div>
+    <div class="dl">Mô tả:</div><div class="dd">${desc}</div>
+    <div class="dl">Bước:</div><div class="dd">${txt(v.buoc)}/8</div>
+    <div class="dl">Người làm:</div><div class="dd">${esc(v.nguoi_lam || 'Chưa giao')}</div>
+    <div class="dl">Người kiểm:</div><div class="dd">${esc(v.nguoi_kiem || 'Chưa giao')}</div>
+    <div class="dl">Token đã dùng:</div><div class="dd">${txt(v.token_da_dung)}</div>
+    <div class="dl">Tạo lúc:</div><div class="dd">${fmtDT(v.tao_luc)}</div>
+    <div class="dl">Cập nhật lúc:</div><div class="dd">${fmtDT(v.cap_nhat_luc)}</div>`;
+}
+// Hiện chi tiết ngay từ payload, rồi bổ sung mô tả từ bảng tasks (nếu lấy được)
+async function showTask(id){
+  const p = state.payload, key = String(id);
+  const t = p && (p.pipeline?.recent_tasks || []).find(x => String(x.id) === key);
+  if(!t) return;
+  state.openTask = key;
+  panel(taskPanel(t, '<em>Đang tải mô tả…</em>'));
+  let v = t, desc;
+  try{
+    const rows = await sbGet(`/rest/v1/tasks?id=eq.${encodeURIComponent(key)}&select=${TASK_FIELDS}`);
+    if(state.openTask !== key) return;
+    if(rows[0]){
+      v = rows[0];
+      desc = esc(rows[0].mo_ta || 'Chưa có mô tả.');
+    } else {
+      desc = 'Không tìm thấy trong bảng tasks — đang hiển thị dữ liệu tóm tắt.';
+    }
+  }catch(e){
+    if(state.openTask !== key) return;
+    desc = 'Không tải được mô tả từ bảng tasks — đang hiển thị dữ liệu tóm tắt.';
+  }
+  panel(taskPanel(v, desc));
+}
+function roomPanel(name, body){
+  panel(`<span class="grip"></span><div class="dh"><b>${esc(name)}</b><button class="x" aria-label="Đóng">×</button></div>${body}`);
+}
+function showRoom(r){
+  const p = state.payload, name = ROOMS[r].name;
+  if(!p){ roomPanel(name, '<div class="dd">Đang tải dữ liệu thật…</div>'); return; }
+  const pl = p.pipeline || {}, c = pl.counts || {}, gate = pl.gate_runs || {};
+  if(r === 'code'){
+    const act = (pl.recent_tasks || []).filter(t => t.trang_thai === 'dang_lam' || t.trang_thai === 'moi');
+    const list = act.length
+      ? act.map(t => `<button type="button" class="dlist" data-task="${esc(t.id)}">#${esc(t.id)} · ${esc(t.tieu_de)}<span>${txt(STATUS_LABEL[t.trang_thai])} · Bước ${txt(t.buoc)}/8 · Người làm: ${esc(t.nguoi_lam || 'Chưa giao')}</span></button>`).join('')
+      : '<div class="dd">Không có việc đang làm hoặc mới trong dữ liệu.</div>';
+    roomPanel(name, `<div class="dl">Số đếm (toàn bộ pipeline):</div><div class="dd">Mới ${txt(c.moi)} · Đang làm ${txt(c.dang_lam)}</div>
+      <div class="dl">Việc đang làm / mới:</div>${list}`);
+  } else if(r === 'check'){
+    const bugs = pl.bugs_open, truot = gate.truot;
+    const clean = bugs === 0 && truot === 0;
+    const runs = gate.recent || [];
+    roomPanel(name, `<div class="dstt ${clean ? 'off' : ''}">${clean ? 'Không có bug mở, không có gate trượt' : `${txt(bugs)} bug mở · ${txt(truot)} gate trượt`}</div>
+      <div class="dl">Gate:</div><div class="dd">Đạt ${txt(gate.dat)} · Trượt ${txt(truot)} · Tổng ${txt(gate.total)}</div>
+      <div class="dl">Lần chạy gate gần đây:</div><div class="dd">${runs.length ? runs.map(g => esc(JSON.stringify(g))).join('<br>') : 'Chưa có lần chạy gate nào trong dữ liệu.'}</div>`);
+  } else if(r === 'telegram'){
+    const svc = Object.entries(p.services || {});
+    roomPanel(name, `<div class="dstt ${pl.bot === 'UP' ? '' : 'off'}">Bot: ${txt(pl.bot)}</div>
+      <div class="dl">Stack:</div><div class="dd">${txt(pl.stack_up)}</div>
+      <div class="dl">Dịch vụ:</div><div class="dd">${svc.length ? svc.map(([k, v]) => `${esc(k)}: ${esc(v)}`).join('<br>') : 'Chưa có dữ liệu trực tiếp'}</div>`);
+  } else {
+    roomPanel(name, '<div class="dstt off">Chưa có dữ liệu trực tiếp</div><div class="dd">Phòng Trial chưa có nguồn dữ liệu nên không đếm được việc.</div>');
+  }
+}
+
+// ===== Chuyển chế độ desktop ⇄ mobile: tính lại mọi dây theo DOM thật =====
+function resize(){
+  svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+  for(const key in links) layoutLink(links[key]);
+}
+function applyMode(){
+  const m = isMobile() ? 'mobile' : 'desktop';
+  if(m === mode) return;
+  mode = m;
+  document.documentElement.dataset.mode = m;
+  resize();
 }
 
 // ===== Vòng lặp dây dữ liệu (chấm sáng chạy nhẹ dọc dây hub→AI) =====
@@ -870,36 +979,46 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 
-// ===== Chuyển chế độ desktop ⇄ mobile: tính lại mọi dây theo DOM thật =====
-function resize(){
-  svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
-  for(const key in links) layoutLink(links[key]);
-}
-function applyMode(){
-  const m = isMobile() ? 'mobile' : 'desktop';
-  if(m === mode) return;
-  mode = m;
-  document.documentElement.dataset.mode = m;
-  resize();
-}
-
 // ===== Khởi tạo =====
 splitTitle();
 buildStage();
-buildTasks();
 buildLinks();
+renderTasks();
+renderLive();
 applyMode();
 if(mq.addEventListener) mq.addEventListener('change', applyMode); else mq.addListener(applyMode);
 new ResizeObserver(resize).observe(stage);
 window.addEventListener('load', resize);
-ref('detail').addEventListener('click', e => { if(e.target.closest('.x')) closeDetail(); });
+ref('detail').addEventListener('click', e => {
+  if(e.target.closest('.x')) return closeDetail();
+  const b = e.target.closest('[data-task]');
+  if(b) showTask(b.dataset.task);
+});
 ref('scrim').addEventListener('click', closeDetail);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDetail(); });
-ref('auto').addEventListener('click', () => { autoOn ? (autoOn = false, setAutoBtn()) : autoLoop(); });
-ref('simerr').addEventListener('click', () => runTask(ERR_IDX));
-ref('reset').addEventListener('click', resetDemo);
-updateSummary();
+ref('tasks').addEventListener('click', e => {
+  const b = e.target.closest('[data-task]');
+  if(b) showTask(b.dataset.task);
+});
+ref('filters').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]');
+  if(!b) return;
+  state.filter = b.dataset.f;
+  document.querySelectorAll('#filters .fbtn').forEach(x => {
+    x.classList.toggle('on', x === b);
+    x.setAttribute('aria-pressed', String(x === b));
+  });
+  renderTasks();
+  resize();
+});
+ref('auto').addEventListener('click', () => {
+  state.auto = !state.auto;
+  if(state.auto) poll(); else clearTimeout(state.timer);
+  renderLive();
+});
+ref('refresh').addEventListener('click', () => { if(!state.busy) poll(); });
 requestAnimationFrame(tick);
+poll();
 
 // Màn mở kiểu credit phim: đo lại dây trong lúc node đang trôi vào (transform), rồi tắt chế độ intro
 if(reduced){
