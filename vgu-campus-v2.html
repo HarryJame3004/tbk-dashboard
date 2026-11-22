@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link rel="icon" href="data:,">
-<title>Tour 3D trường VGU — BẢN v2</title>
+<title>Tour 3D trường VGU — BẢN v7</title>
 <script type="importmap">
 { "imports": { "three": "./vgu-assets/vendor/three.module.js" } }
 </script>
@@ -36,7 +36,7 @@
   #hud li{margin:3px 0}
   #layoutNote{white-space:pre-wrap;font-size:12px;background:#f4f6f8;border-radius:8px;padding:6px 8px;margin-top:6px}
   #card{position:fixed;right:12px;top:12px;width:300px;max-width:calc(100vw - 24px);background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 14px rgba(0,0,0,.2);font-size:13px;line-height:1.45;z-index:3}
-  #card[hidden],#hud[hidden],#hudBody[hidden],#boot[hidden]{display:none}
+  #card[hidden],#hud[hidden],#hudBody[hidden],#boot[hidden],#extBadge[hidden]{display:none}
   #card h2{font-size:16px;margin:0 0 6px}
   #card p{margin:6px 0}
   #joy{position:fixed;left:16px;bottom:16px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.7);display:none;touch-action:none;z-index:2}
@@ -54,12 +54,12 @@
 
 <div id="hud">
   <div class="top">
-    <h1>Tour 3D trường VGU — BẢN v2</h1>
+    <h1>Tour 3D trường VGU — BẢN v7</h1>
     <button class="btn small" id="hudToggle">Ẩn</button>
   </div>
   <!-- Mặc định ĐÓNG ngay trong markup (điện thoại thấy panel đóng từ đầu); máy tính được mở bằng script ngay sau đây -->
   <div id="hudBody" hidden>
-    <span class="badge">BẢN v2</span> <span class="badge warn" id="extBadge" hidden>Ngoại thất dự phòng</span>
+    <span class="badge">BẢN v7</span> <span class="badge warn" id="extBadge" hidden>Ngoại thất dự phòng</span>
     <p class="muted"><b>Hero đã đổi</b> sang tòa nhà chính xám của campus mới; tòa 5 tầng nâu của campus cũ (Hòa Phú) đã bỏ. Bố cục khuôn viên dựng theo ảnh toàn cảnh thật chụp từ trên cao; mặt tiền và mặt đất dùng ảnh thật làm texture, có ánh nắng và bóng đổ. Vị trí và tỉ lệ vẫn là gần đúng, chưa đo theo bản vẽ.</p>
     <p class="muted" id="extInfo"></p>
     <p><b>Máy tính:</b> WASD đi · Shift chạy · Kéo chuột để xoay (bấm vào màn hình sẽ khóa chuột, Esc để thoát) · Cuộn để thu/phóng.</p>
@@ -120,7 +120,7 @@
 <script>
   // Three.js r160 (0.160.0) được vendor local tại vgu-assets/vendor/three.module.js (không phụ thuộc CDN).
   // Phòng khi module Three.js không tải được (thiếu file vendor / mở bằng file://): hiện thông báo bằng chữ.
-  // v2 chờ lâu hơn v1 (texture ảnh thật + tính lưới điều hướng).
+  // v5 chờ lâu hơn v1 (texture ảnh thật + tính lưới điều hướng).
   setTimeout(function () {
     if (!window.__VGU_READY__) {
       var b = document.getElementById('boot');
@@ -158,16 +158,17 @@ const INTEG = [];
 const STEP = 0.5;        // bậc tối đa nhân vật tự bước lên được (không teleport)
 const HEAD = 1.7;        // chiều cao vùng va chạm của thân
 const RAD = 0.35;        // bán kính nhân vật
-const WALK_SPEED = 3.2;  // m/s đi bình thường
-const RUN_SPEED = 8;     // m/s khi giữ Shift (v1: 6.5; khuôn viên v2 rộng ~600 m)
-const AUTO_SPEED = 3.6;  // m/s đi tự động trong nhà / cầu thang
-const AUTO_MAX = 14;     // m/s tối đa khi đi tự động quãng dài ngoài trời
+const WALK_SPEED = 5.0;  // m/s đi bình thường (v2.7: 3.2 → 5.0, sếp chê đi chậm)
+const RUN_SPEED = 13;    // m/s khi giữ Shift (v2.7: 8 → 13, hệ số Shift ×2.6 thay vì ×2.5)
+const AUTO_SPEED = 5.0;  // m/s đi tự động trong nhà / cầu thang (v2.7: 3.6 → 5.0)
+const AUTO_MAX = 18;     // m/s tối đa khi đi tự động quãng dài ngoài trời (v2.7: 14 → 18)
 const OVERHEAD = 1.8;    // vật có đáy cao hơn mức này coi là ở trên đầu (mái che, tán cây, diềm mái)
 
 const P = { x: 0, y: 0, z: 0, heading: Math.PI, speed: 0, walkT: 0 };
 let SPAWN = { x: 0, z: 0, heading: Math.PI };
 let yaw = 0, pitch = 0.35, camDist = 7;
 let auto = null;         // trạng thái đi tự động: {pts, i, stop, stuck, fast}
+let settle = null;       // {x, z}: sau khi tới nơi, camera + nhân vật xoay mượt để hướng về điểm đến (null = không xoay)
 let selected = null;     // điểm dừng đang mở trong thẻ thông tin
 let labelsOn = true;
 let dragging = false;
@@ -200,7 +201,7 @@ const LM = THREE.DefaultLoadingManager;
 const lmState = { started: false, done: false };
 LM.onStart = () => { lmState.started = true; lmState.done = false; };
 LM.onLoad = () => { lmState.done = true; };
-LM.onError = (url) => { console.warn('[VGU v2] Không tải được texture:', url); };
+LM.onError = (url) => { console.warn('[VGU v7]Không tải được texture:', url); };
 // Ghi tên file texture vào texture.name ngay lúc module gọi load() (không sửa module, chỉ bọc hàm của Three.js)
 // → phân loại nước/đường/sân theo tên file không phải chờ ảnh tải xong.
 {
@@ -274,7 +275,7 @@ function worldRect(obj, minH) {
 // =====================================================================
 // NGOẠI THẤT: module của Antigravity (./vgu-assets/vgu-exterior.js)
 // =====================================================================
-const ANCHOR_KEYS = ['mainGate', 'mainBuildingEntrance', 'mainBuildingFront', 'mainBuilding', 'lectureHall', 'pool', 'track', 'canalBridge'];
+const ANCHOR_KEYS = ['mainGate', 'mainBuildingEntrance', 'mainBuildingFront', 'mainBuilding', 'lectureHall', 'domeOval', 'pool', 'track', 'canalBridge'];
 const BUILDING_KEYS = ['mainBuilding', 'whiteCluster', 'ovalHall', 'sportsHall', 'courtyardBuilding'];
 
 function toV3(a) {
@@ -381,7 +382,7 @@ function fallbackExterior() {
   blk('cy-south', 18, 44, 0, 10, 76, 82, M(0xc9c2b4, 0.7), cy);
   blk('cy-east', 38, 44, 0, 10, 64, 76, M(0xc9c2b4, 0.7), cy);
   const anchors = {
-    mainGate: new THREE.Vector3(0, 0, 92),
+    mainGate: new THREE.Vector3(0, 0, 100),
     mainBuildingEntrance: new THREE.Vector3(-67, 0, -55.5), mainBuildingFront: new THREE.Vector3(-67, 0, -50),
     mainBuilding: new THREE.Vector3(-67, 0, -52),
     lectureHall: new THREE.Vector3(-30, 0, 0), pool: new THREE.Vector3(40, 0, 28),
@@ -398,7 +399,7 @@ try {
   const mod = await import('./vgu-assets/vgu-exterior.js');
   EXT = await adoptModule(mod);
 } catch (err) {
-  console.error('[VGU v2] Module ngoại thất lỗi:', err);
+  console.error('[VGU v7]Module ngoại thất lỗi:', err);
   CONTRACT.push('Không dùng được module ngoại thất (' + (err && err.message ? err.message : err) + ') — đang dùng ngoại thất dự phòng.');
   EXT = null;
 }
@@ -771,6 +772,14 @@ plane(3.2, 0.4, new THREE.MeshLambertMaterial({
   map: signTex('PHÒNG HỌC', '#e8792b', '#ffffff', 1024, 128, 0.6), side: THREE.DoubleSide
 }), 52.45, 5.8, -44.5, Math.PI / 2);
 interior.updateMatrixWorld(true);
+
+// v5b (mục 1): hộp CHẶN CAMERA do module đặt (hàng cột cờ cổng, userData.camBlocker, ẩn, không vào lưới đi bộ).
+// Camera không kiểm tra hình học cột mảnh nên cần hộp này: đứng ở neo cổng, camera sau lưng sẽ nằm sát trục cột giữa.
+EXT.group.traverse((o) => {
+  if (!o.userData || !o.userData.camBlocker) return;
+  const r = worldRect(o, 0);
+  if (r) CAMB.push({ x0: r.x0, x1: r.x1, y0: r.y0, y1: r.y1, z0: r.z0, z1: r.z1 });
+});
 
 // Tập hợp hộp dùng cho camera: va chạm + sàn/trần
 const CAMALL = COL.concat(CAMB);
@@ -1286,12 +1295,12 @@ try {
   buildNav();
   navOK = true;
 } catch (err) {
-  console.error('[VGU v2] Không dựng được lưới điều hướng:', err);
+  console.error('[VGU v7]Không dựng được lưới điều hướng:', err);
   INTEG.push('Không dựng được lưới điều hướng (' + (err && err.message) + ') — ngoài trời chỉ còn va chạm nội thất, đi tự động theo đường thẳng.');
   NAV = null;
 }
 // Dốc cầu dựng SAU lưới (độ dài từng đầu do buildNav chọn); lưới lỗi → độ dài mặc định
-try { addBridgeRamps(!navOK); } catch (err) { console.warn('[VGU v2] Không dựng được dốc cầu:', err); }
+try { addBridgeRamps(!navOK); } catch (err) { console.warn('[VGU v7]Không dựng được dốc cầu:', err); }
 
 // =====================================================================
 // Nhân vật (avatar khối, hướng mặt về +z cục bộ) — như v1, thêm đổ bóng
@@ -1358,11 +1367,22 @@ const STOPS = [
     desc: 'Giảng đường bậc thang ở tầng 2 của tòa nhà chính. Nội thất này là PLACEHOLDER (giữ từ bản v1: bàn gỗ, tường trắng, đơn giản), CHƯA phải nội thất thật của tòa xám; sẽ thay bằng ảnh chụp nội thất thật sau.' },
   anchorStop('hall', 'Hội trường lớn', 'lectureHall',
     'Hội trường: khối dài màu xám, hàng cột trắng cao, khối vòm oval bên cạnh (dáng theo ảnh phối cảnh kiến trúc).', 8),
+  anchorStop('vom', 'Vòm oval', 'domeOval',
+    'Mái vòm oval trắng phía đông kênh, nhìn được cả vòm lẫn kênh rẽ nam.', 5),
   anchorStop('pool', 'Hồ bơi', 'pool', 'Hồ bơi ngoài trời và sàn hồ.', 3.5),
   anchorStop('track', 'Sân chạy', 'track', 'Sân chạy oval đỏ trong khu thể thao.', 5),
-  anchorStop('canal', 'Cầu qua kênh', 'canalBridge', 'Cầu đi bộ — điểm neo canalBridge của module ngoại thất.', 4)
+  anchorStop('canal', 'Cầu qua kênh', 'canalBridge', 'Cầu đi bộ — điểm neo canalBridge của module ngoại thất.', 4),
+  // v7 (đợt 3): ký túc xá — neo outdoor ngoài bộ 8 khóa ANCHOR_KEYS, đặt TÂM SÂN TRONG của cụm KTX (−111.0, 61.6).
+  // PHẢI khớp KTX_CENTER trong vgu-assets/vgu-exterior.js.
+  { id: 'ktx', name: 'Ký túc xá', inside: false, anchor: { x: -111.0, z: 61.6 }, lp: [-111.0, 7, 61.6],
+    desc: 'Khu ký túc xá: tòa xanh 5 tầng (60 m) và tòa cam (50 m) đối diện qua sân trong 8 m lát gạch; hành lang mái che nối hai tòa, tầng trệt mở trên cột tròn.' }
 ];
 const STOP_BY_ID = Object.fromEntries(STOPS.map((s) => [s.id, s]));
+// v5b (mục 5): tới "Tòa nhà chính" thì lùi camera ra xa và hạ góc nhìn để thấy đủ mặt tiền tòa xám (55 m × ~15 m).
+// Tính sơ bộ (không chụp kiểm chứng trong phiên này): camera cách mặt tiền ~39 m, góc ngang ±35° nằm trong ±42°
+// của khung 16:9; mái (y 15) và chân (y 0) nằm trong khung dọc 55°. Giới hạn cuộn chuột 20 m giữ nguyên;
+// mốc này chỉ áp dụng khi tới điểm (cuộn chuột sau đó sẽ kéo về ≤ 20 m).
+STOP_BY_ID.mb.view = { dist: 30, pitch: 0.2 };
 
 // Cầu thang: x 35.4–40 (cục bộ), 9 bậc từ z -32.4 (chân) tới z -40.5 (đỉnh), chiếu nghỉ z -40.5…-47.6 (cao 4 m)
 const STAIR_X = 37.7;
@@ -1426,6 +1446,7 @@ function setStatus(text) {
 }
 function cancelAuto(msg) {
   auto = null;
+  settle = null;
   if (msg) setStatus(msg);
 }
 function goStop(s) {
@@ -1435,7 +1456,7 @@ function goStop(s) {
     cancelAuto('Không tìm được đường đi bộ tới đây từ vị trí hiện tại.');
     return;
   }
-  auto = { pts: r.pts, i: 0, stop: s, stuck: 0, len: r.len, fast: clamp(r.len / 30, AUTO_SPEED, AUTO_MAX) };
+  auto = { pts: r.pts, i: 0, stop: s, stuck: 0, len: r.len, fast: clamp(r.len / 22, AUTO_SPEED, AUTO_MAX) };
   let msg = 'Đang đi tới ' + s.name + (r.len > 40 ? ' (khoảng ' + Math.round(r.len) + ' m đi bộ ngoài trời)' : '') + '…';
   if (r.gap > 4) msg += ' Điểm neo không đi bộ tới được, sẽ dừng ở chỗ gần nhất (cách ' + Math.round(r.gap) + ' m).';
   setStatus(msg);
@@ -1502,13 +1523,19 @@ function surfaceY(x, z, y) {
   return best;
 }
 const BOUNDS = NAV ? { x0: NAV.x0 + 1, x1: NAV.x1 - 1, z0: NAV.z0 + 1, z1: NAV.z1 - 1 } : { x0: -300, x1: 300, z0: -300, z1: 300 };
+// v2.7: chia bước thành đoạn ≤ 0.25 m để không xuyên qua vật cản mỏng khi chạy nhanh (khung hình tối đa 0.05 s → ≤ 0.65 m)
 function moveBody(dx, dz) {
-  const x0 = P.x, z0 = P.z, y = P.y;
+  const n = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.25));
+  const x0 = P.x, z0 = P.z;
+  for (let k = 0; k < n; k++) moveBodyStep(dx / n, dz / n);
+  return Math.hypot(P.x - x0, P.z - z0);
+}
+function moveBodyStep(dx, dz) {
+  const y = P.y;
   const nx = clamp(P.x + dx, BOUNDS.x0, BOUNDS.x1);
   if (!hit(nx, P.z, y)) P.x = nx;
   const nz = clamp(P.z + dz, BOUNDS.z0, BOUNDS.z1);
   if (!hit(P.x, nz, y)) P.z = nz;
-  return Math.hypot(P.x - x0, P.z - z0);
 }
 // Camera bị tường/sàn chặn thì kéo lại gần nhân vật (nội thất: hộp v1; ngoài trời: độ cao lưới)
 function inBlocker(x, y, z) {
@@ -1550,7 +1577,16 @@ function followAuto(dt) {
       return 0;
     }
     auto = null;
-    setStatus('Đã tới: ' + a.stop.name + '. Bạn có thể xem và đi tiếp.');
+    // Tới nơi: đặt mục tiêu xoay về điểm đến (lp = điểm nhìn của điểm dừng); update() sẽ ease tới đó
+    if (a.stop.lp) settle = { x: a.stop.lp[0], z: a.stop.lp[2] };
+    if (a.stop.view) { camDist = a.stop.view.dist; pitch = a.stop.view.pitch; } // v5b: góc nhìn riêng của điểm dừng
+    // v2.8: báo theo khoảng cách THỰC TẾ tới điểm neo (không chỉ theo ô lưới cuối lộ trình, vốn có thể cách neo vài mét).
+    // ≤ 2 m: "Đã tới"; 2–6 m: "Đã tới gần (cách X m)"; > 6 m: "Không tới được điểm — đã dừng cách X m".
+    const tgtXZ = a.stop.inside ? L2W(a.stop.local[0], a.stop.local[1]) : [a.stop.anchor.x, a.stop.anchor.z];
+    const gapM = Math.hypot(P.x - tgtXZ[0], P.z - tgtXZ[1]);
+    if (gapM <= 2) setStatus('Đã tới: ' + a.stop.name + '. Bạn có thể xem và đi tiếp.');
+    else if (gapM <= 6) setStatus('Đã tới gần: ' + a.stop.name + ' (cách ' + gapM.toFixed(1) + ' m). Điểm neo không đi tới hẳn được, bạn có thể đi tay tiếp.');
+    else setStatus('Không tới được điểm ' + a.stop.name + ' — đã dừng cách ' + gapM.toFixed(1) + ' m. Bạn đi tay tới gần hơn rồi bấm "Đi tới" lại nhé.');
     return 0;
   }
   const spd = t[2] ? AUTO_SPEED : a.fast;
@@ -1711,20 +1747,36 @@ for (const [tag, list] of [['Khác hợp đồng', CONTRACT], ['Tích hợp', IN
     $('noteList').appendChild(li);
   }
 }
-if (CONTRACT.length) console.warn('[VGU v2] Khác hợp đồng module:', CONTRACT);
-if (INTEG.length) console.info('[VGU v2] Ghi chú tích hợp:', INTEG);
+if (CONTRACT.length) console.warn('[VGU v7]Khác hợp đồng module:', CONTRACT);
+if (INTEG.length) console.info('[VGU v7]Ghi chú tích hợp:', INTEG);
 
 const tmpV = new THREE.Vector3();
+// Nhãn căn giữa ngang theo điểm neo và nằm phía trên nó (translate -50%, -100%). Nhãn chỉ hiện khi điểm neo
+// nằm trong khung hình; nếu nhãn dài sát mép thì KẸP vào trong biên (không đổi nội dung), để không bị cắt nửa chữ.
+const LBL_EDGE = 6; // px cách mép màn hình
 function updateLabels() {
   const w = innerWidth, h = innerHeight;
+  // v7 đợt 4c (mục 2): HUD (fixed, top 12 px) phủ đè nhãn nếu đỉnh nhãn nằm dưới đáy HUD nhưng trên mép màn hình.
+  // Đo đáy HUD một lần mỗi khung; đỉnh nhãn (y − lh) phải ≥ đáy HUD + LBL_EDGE.
+  const hudEl = $('hud');
+  const hudBottom = hudEl ? hudEl.getBoundingClientRect().bottom : 0;
   for (const s of STOPS) {
     if (!s.el) continue;
     tmpV.set(s.lp[0], s.lp[1], s.lp[2]).project(camera);
-    const ok = labelsOn && tmpV.z > -1 && tmpV.z < 1 && Math.abs(tmpV.x) < 1.2 && Math.abs(tmpV.y) < 1.2;
+    const sx = (tmpV.x + 1) / 2 * w, sy = (1 - tmpV.y) / 2 * h;
+    const ok = labelsOn && tmpV.z > -1 && tmpV.z < 1 && sx >= 0 && sx <= w && sy >= 0 && sy <= h;
     s.el.style.display = ok ? 'block' : 'none';
     if (ok) {
-      s.el.style.left = ((tmpV.x + 1) / 2 * w) + 'px';
-      s.el.style.top = ((1 - tmpV.y) / 2 * h) + 'px';
+      // Đo lại kích thước THẬT mỗi khung khi nhãn hiện (đợt 4). Bản cũ cache lw một lần: nếu lần đo đó sai
+      // (chưa layout/chưa có font/nhãn vừa hiện) thì mép phải bị cắt, đúng lỗi "Hội trường lớn" trên mobile 390px.
+      const lw = s.el.offsetWidth, lh = s.el.offsetHeight;
+      const x = clamp(sx, lw / 2 + LBL_EDGE, w - lw / 2 - LBL_EDGE);
+      // Đỉnh nhãn ≥ đáy HUD + LBL_EDGE. Không đủ chỗ (HUD quá cao so với màn hình) thì ẩn nhãn trong khung này.
+      const minY = Math.max(lh + LBL_EDGE, hudBottom + LBL_EDGE + lh);
+      if (minY > h - LBL_EDGE) { s.el.style.display = 'none'; continue; }
+      const y = clamp(sy, minY, h - LBL_EDGE);
+      s.el.style.left = x + 'px';
+      s.el.style.top = y + 'px';
     }
   }
 }
@@ -1754,6 +1806,22 @@ function updateCamera(dt) {
   camera.updateMatrixWorld();
 }
 
+// Sau khi tới nơi: ease mượt camera (yaw) và nhân vật (heading) về hướng nhìn tới điểm đến.
+// Quy ước: camera đặt ở hướng yaw sau lưng nhân vật ⇒ yaw = heading + π. Góc hiệu dụng luôn lấy hiệu nhỏ nhất
+// (-π..π) nên không quay vòng thừa. Nếu đã đứng sát điểm đến (< 0.5 m) thì giữ hướng hiện tại.
+function settleFacing(dt) {
+  if (dragging || document.pointerLockElement) { settle = null; return; } // người dùng đang tự xoay: nhường quyền
+  const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const dx = settle.x - P.x, dz = settle.z - P.z;
+  const goalH = Math.hypot(dx, dz) > 0.5 ? Math.atan2(dx, dz) : P.heading;
+  const k = 1 - Math.exp(-dt * 2.2);
+  const dh = wrap(goalH - P.heading);
+  const dy = wrap((goalH + Math.PI) - yaw);
+  P.heading = wrap(P.heading + dh * k);
+  yaw = wrap(yaw + dy * k);
+  if (Math.abs(dh) < 0.002 && Math.abs(dy) < 0.002) settle = null; // đã hướng đúng: dừng
+}
+
 // ---------- Cập nhật mỗi khung hình ----------
 function update(dt) {
   const up = keys.KeyW || keys.ArrowUp, down = keys.KeyS || keys.ArrowDown;
@@ -1764,6 +1832,7 @@ function update(dt) {
   let moved = 0;
   if (mag > 0.05) {
     if (auto) cancelAuto('Đã dừng đi tự động vì bạn tự điều khiển.'); // không để trạng thái "Đang đi tới…" treo
+    settle = null; // người chơi tự đi thì hủy xoay tự động sau khi tới nơi
     const n = Math.min(1, mag);
     const spd = (keys.ShiftLeft || keys.ShiftRight ? RUN_SPEED : WALK_SPEED) * n;
     const dx = (fwd * -Math.sin(yaw) + side * Math.cos(yaw)) / mag;
@@ -1778,6 +1847,8 @@ function update(dt) {
       d = Math.atan2(Math.sin(d), Math.cos(d));
       yaw += d * (1 - Math.exp(-dt * 1.5));
     }
+  } else if (settle) {
+    settleFacing(dt);
   }
   P.speed = dt > 0 ? moved / dt : 0;
   P.y = surfaceY(P.x, P.z, P.y);
@@ -1843,13 +1914,13 @@ function frame() {
       pixelRatio: renderer.getPixelRatio(), shadowMapSize: SHADOW_SIZE,
       shadowType: isTouch ? 'PCF' : 'PCFSoft', touch: isTouch
     });
-    console.info('[VGU v2] Frame đầu:', perf);
+    console.info('[VGU v7]Frame đầu:', perf);
     window.__VGU__ = {
       perf,
       perfNow,
       shell: () => ({ meshes: SHELL.length, alpha: shellA, interiorVisible: interior.visible }),
       pos: () => ({ x: P.x, y: P.y, z: P.z, floor: floorOf(), inside: insideMain() }),
-      version: 'v2',
+      version: 'v7',
       exterior: EXT_SOURCE,
       stops: STOPS.map((s) => s.id),
       go: (id) => { const s = STOP_BY_ID[id]; if (!s) return false; openStop(id); goStop(s); return !!auto; },
