@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link rel="icon" href="data:,">
-<title>Tour 3D trường VGU — BẢN v7</title>
+<title>Tour 3D trường VGU — BẢN v8</title>
 <script type="importmap">
 { "imports": { "three": "./vgu-assets/vendor/three.module.js" } }
 </script>
@@ -54,12 +54,12 @@
 
 <div id="hud">
   <div class="top">
-    <h1>Tour 3D trường VGU — BẢN v7</h1>
+    <h1>Tour 3D trường VGU — BẢN v8</h1>
     <button class="btn small" id="hudToggle">Ẩn</button>
   </div>
   <!-- Mặc định ĐÓNG ngay trong markup (điện thoại thấy panel đóng từ đầu); máy tính được mở bằng script ngay sau đây -->
   <div id="hudBody" hidden>
-    <span class="badge">BẢN v7</span> <span class="badge warn" id="extBadge" hidden>Ngoại thất dự phòng</span>
+    <span class="badge">BẢN v8</span> <span class="badge warn" id="extBadge" hidden>Ngoại thất dự phòng</span>
     <p class="muted"><b>Hero đã đổi</b> sang tòa nhà chính xám của campus mới; tòa 5 tầng nâu của campus cũ (Hòa Phú) đã bỏ. Bố cục khuôn viên dựng theo ảnh toàn cảnh thật chụp từ trên cao; mặt tiền và mặt đất dùng ảnh thật làm texture, có ánh nắng và bóng đổ. Vị trí và tỉ lệ vẫn là gần đúng, chưa đo theo bản vẽ.</p>
     <p class="muted" id="extInfo"></p>
     <p><b>Máy tính:</b> WASD đi · Shift chạy · Kéo chuột để xoay (bấm vào màn hình sẽ khóa chuột, Esc để thoát) · Cuộn để thu/phóng.</p>
@@ -79,7 +79,7 @@
         <li>Các tòa khác chỉ có vỏ ngoài; hình khối, chiều cao và chi tiết mặt tiền là gần đúng.</li>
         <li>Cây, cột đèn, xe buýt là mẫu lặp lại, không đúng vị trí thật.</li>
         <li>Dốc lên hai đầu cầu do trang này thêm vào để đi bộ được, không có trong ảnh thật.</li>
-        <li>Nhân vật là avatar khối đơn giản; chưa có người, xe chạy, âm thanh; ánh nắng cố định một giờ.</li>
+        <li>Nhân vật là sếp (tóc đen mái bằng, áo thun xám), dựng bằng khối đơn giản; chưa có người, xe chạy, âm thanh; ánh nắng cố định một giờ.</li>
         <li>Đi tự động tìm đường trên lưới tính từ hình học ngoại thất; ưu tiên đường nhựa nhưng có thể đi qua bãi cỏ. Nhãn điểm dừng hiện xuyên tường.</li>
       </ul>
     </details>
@@ -201,7 +201,7 @@ const LM = THREE.DefaultLoadingManager;
 const lmState = { started: false, done: false };
 LM.onStart = () => { lmState.started = true; lmState.done = false; };
 LM.onLoad = () => { lmState.done = true; };
-LM.onError = (url) => { console.warn('[VGU v7]Không tải được texture:', url); };
+LM.onError = (url) => { console.warn('[VGU v8]Không tải được texture:', url); };
 // Ghi tên file texture vào texture.name ngay lúc module gọi load() (không sửa module, chỉ bọc hàm của Three.js)
 // → phân loại nước/đường/sân theo tên file không phải chờ ảnh tải xong.
 {
@@ -217,7 +217,7 @@ LM.onError = (url) => { console.warn('[VGU v7]Không tải được texture:', u
 const C = {
   white: 0xf4f4f0, wall: 0xe6e0d0, /* tường nội thất: trắng kem trung tính (v1 là nâu 0x6b4226) */ floorLight: 0xefe9dc, wood: 0xb07a45, orange: 0xe8792b,
   dark: 0x2b2f36, stair: 0xe6e1d3, ceiling: 0xf7f7f2,
-  skin: 0xf0c9a0, shirt: 0x2c6fb7, pants: 0x2f3642, hair: 0x2a1d14
+  skin: 0xf0c9a0, shirt: 0x8a8d90, pants: 0x2f3642, hair: 0x1a1512
 };
 const MAT = {};
 for (const k in C) MAT[k] = new THREE.MeshLambertMaterial({ color: C[k], flatShading: true });
@@ -399,7 +399,7 @@ try {
   const mod = await import('./vgu-assets/vgu-exterior.js');
   EXT = await adoptModule(mod);
 } catch (err) {
-  console.error('[VGU v7]Module ngoại thất lỗi:', err);
+  console.error('[VGU v8]Module ngoại thất lỗi:', err);
   CONTRACT.push('Không dùng được module ngoại thất (' + (err && err.message ? err.message : err) + ') — đang dùng ngoại thất dự phòng.');
   EXT = null;
 }
@@ -1295,34 +1295,315 @@ try {
   buildNav();
   navOK = true;
 } catch (err) {
-  console.error('[VGU v7]Không dựng được lưới điều hướng:', err);
+  console.error('[VGU v8]Không dựng được lưới điều hướng:', err);
   INTEG.push('Không dựng được lưới điều hướng (' + (err && err.message) + ') — ngoài trời chỉ còn va chạm nội thất, đi tự động theo đường thẳng.');
   NAV = null;
 }
 // Dốc cầu dựng SAU lưới (độ dài từng đầu do buildNav chọn); lưới lỗi → độ dài mặc định
-try { addBridgeRamps(!navOK); } catch (err) { console.warn('[VGU v7]Không dựng được dốc cầu:', err); }
+try { addBridgeRamps(!navOK); } catch (err) { console.warn('[VGU v8]Không dựng được dốc cầu:', err); }
 
 // =====================================================================
-// Nhân vật (avatar khối, hướng mặt về +z cục bộ) — như v1, thêm đổ bóng
+// Nhân vật boss v8 (sếp Trần Ngoc Minh Khôi) — dựng bởi buildBossPlayer.
+// Mặt hướng +z cục bộ. Tên trục quay (legL/legR/armL/armR/torso/head/hair)
+// giữ nguyên để code điều khiển bên dưới chạy không đổi.
 // =====================================================================
-const player = new THREE.Group();
+function buildBossPlayer(THREE, MAT) {
+  // ---- Vật liệu riêng của boss (không có sẵn / khác màu trong MAT) ----
+  const shirtGrey = new THREE.MeshLambertMaterial({ color: 0x8a8d90 }); // áo xám
+  const collarGrey = new THREE.MeshLambertMaterial({ color: 0x6f7275 }); // cổ áo
+  const hairMat = new THREE.MeshLambertMaterial({
+    color: 0x1a1512, side: THREE.DoubleSide // tóc gần đen; DoubleSide cho vỏ sau
+  });
+  const eyeWhite = new THREE.MeshLambertMaterial({ color: 0xf5f2ea });
+  const lipMat = new THREE.MeshLambertMaterial({ color: 0x7a3b2e }); // đường môi
+  const lipLight = new THREE.MeshLambertMaterial({ color: 0xb97861 }); // môi dưới gần da hơn
+  const lidMat = new THREE.MeshLambertMaterial({ color: 0xa0715c }); // đường mí nâu nhạt hơn (đợt 3: nhạt để không đọc như bóng đổ)
+  const nostrilMat = new THREE.MeshLambertMaterial({ color: 0x4a2c20 }); // lỗ mũi nâu tối
+  const highlightMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // điểm bắt sáng mắt
+  const shoeMat = new THREE.MeshLambertMaterial({ color: 0x23262b }); // giày tối
+  const soleMat = new THREE.MeshLambertMaterial({ color: 0x3a3f46 }); // đế giày
+
+  // Helper: tạo mesh, đặt vị trí, (tuỳ chọn) scale / xoay, đặt tên.
+  function M(geo, mat, x, y, z, name) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    if (name) m.name = name;
+    return m;
+  }
+
+  const player = new THREE.Group();
+  player.name = 'player';
+
+  // -----------------------------------------------------------------
+  // CHÂN — Group trục quay ở hông (±0.13, 0.72, 0), như code cũ.
+  // Ống quần trụ tròn (không hộp), giày mũi hướng +z, đế giày chạm y≈0.
+  // -----------------------------------------------------------------
+  const legGeo = new THREE.CylinderGeometry(0.105, 0.088, 0.64, 16);
+  const shoeGeo = new THREE.BoxGeometry(0.12, 0.07, 0.28);
+  const soleGeo = new THREE.BoxGeometry(0.125, 0.025, 0.29);
+
+  const legL = new THREE.Group();
+  legL.name = 'legL';
+  legL.position.set(-0.13, 0.72, 0);
+  legL.add(M(legGeo, MAT.pants, 0, -0.35, 0, 'legLMesh'));
+  legL.add(M(shoeGeo, shoeMat, 0, -0.68, 0.05, 'shoeL'));
+  legL.add(M(soleGeo, soleMat, 0, -0.705, 0.05, 'soleL'));
+
+  const legR = new THREE.Group();
+  legR.name = 'legR';
+  legR.position.set(0.13, 0.72, 0);
+  legR.add(M(legGeo, MAT.pants, 0, -0.35, 0, 'legRMesh'));
+  legR.add(M(shoeGeo, shoeMat, 0, -0.68, 0.05, 'shoeR'));
+  legR.add(M(soleGeo, soleMat, 0, -0.705, 0.05, 'soleR'));
+
+  // -----------------------------------------------------------------
+  // TAY — Group trục quay ở vai (±0.34, 1.42, 0), như code cũ.
+  // Tay áo xám ngắn tới giữa bắp tay, cẳng tay da, bàn tay tròn dẹt.
+  // -----------------------------------------------------------------
+  const sleeveGeo = new THREE.CylinderGeometry(0.088, 0.082, 0.22, 14);
+  const foreGeo = new THREE.CylinderGeometry(0.062, 0.056, 0.30, 14);
+  const handGeo = new THREE.SphereGeometry(0.055, 12, 10);
+
+  function buildArm(side) { // side: -1 trái, +1 phải
+    const arm = new THREE.Group();
+    arm.name = side < 0 ? 'armL' : 'armR';
+    arm.position.set(0.34 * side, 1.42, 0);
+    arm.add(M(sleeveGeo, shirtGrey, 0, -0.11, 0, side < 0 ? 'sleeveL' : 'sleeveR'));
+    arm.add(M(foreGeo, MAT.skin, 0, -0.36, 0, side < 0 ? 'foreL' : 'foreR'));
+    const hand = M(handGeo, MAT.skin, 0, -0.56, 0, side < 0 ? 'handL' : 'handR');
+    hand.scale.set(0.9, 1.15, 0.9);
+    arm.add(hand);
+    return arm;
+  }
+  const armL = buildArm(-1);
+  const armR = buildArm(1);
+
+  // -----------------------------------------------------------------
+  // THÂN — áo thun xám cổ tròn tay ngắn.
+  // Thân trụ thuôn, dẹt theo z; vai ngang capsule; cổ áo vòng trụ hở.
+  // -----------------------------------------------------------------
+  const torso = M(
+    new THREE.CylinderGeometry(0.235, 0.21, 0.64, 20),
+    shirtGrey, 0, 1.07, 0, 'torso'
+  );
+  torso.scale.set(1, 1, 0.62); // sâu ~0.29 m
+
+  const shoulders = M(
+    new THREE.CapsuleGeometry(0.10, 0.34, 4, 12),
+    shirtGrey, 0, 1.36, 0, 'shoulders'
+  );
+  shoulders.rotation.z = Math.PI / 2; // capsule nằm ngang qua vai
+
+  const collar = M(
+    new THREE.CylinderGeometry(0.105, 0.112, 0.045, 20, 1, true),
+    collarGrey, 0, 1.405, 0, 'collar'
+  );
+
+  const neck = M(
+    new THREE.CylinderGeometry(0.068, 0.075, 0.14, 14),
+    MAT.skin, 0, 1.455, 0, 'neck'
+  );
+
+  // -----------------------------------------------------------------
+  // ĐẦU & CẰM — đầu hơi dẹt, cằm thon đưa ra trước lộ dưới y≈1.58.
+  // Tâm đầu (0, 1.71, 0), bán kính 0.20 -> đỉnh đầu ~1.91 m.
+  // -----------------------------------------------------------------
+  const head = M(
+    new THREE.SphereGeometry(0.20, 24, 18),
+    MAT.skin, 0, 1.71, 0, 'head'
+  );
+  head.scale.set(0.97, 1.0, 0.95);
+
+  const chin = M(
+    new THREE.SphereGeometry(0.13, 16, 12),
+    MAT.skin, 0, 1.60, 0.018, 'chin' // v8 đợt 2: lùi từ z 0.03 để bớt vệt giao tuyến dưới môi
+  );
+  chin.scale.set(0.80, 0.70, 0.95); // thon hàm dưới, đưa ra trước để lộ silhouette
+
+  // -----------------------------------------------------------------
+  // MẶT — mắt mí + xếch nhẹ, điểm bắt sáng, lông mày thẳng ngang dưới mái,
+  // mũi có sống/đầu tròn/cánh/lỗ mũi, miệng cười mỉm, má shading mềm.
+  // -----------------------------------------------------------------
+  // MẮT: hình hạnh nhân, hơi xếch (đuôi mắt ngoài nhếch lên), mí trên rõ
+  // v8 đợt 3: giảm xếch 0.11→0.055 (hết lườm), giữ y/mắt như đợt 2.
+  const EYE_Y = 1.728;
+  const eyeWhiteGeo = new THREE.SphereGeometry(0.030, 12, 8);
+  const pupilGeo = new THREE.SphereGeometry(0.0135, 8, 6);
+  const highlightGeo = new THREE.SphereGeometry(0.0045, 6, 4);
+  const lidFoldGeo = new THREE.SphereGeometry(0.032, 12, 8);
+  const EYE_ROT = 0.055;
+
+  const eyeL = M(eyeWhiteGeo, eyeWhite, -0.072, EYE_Y, 0.178, 'eyeL');
+  eyeL.scale.set(1.15, 0.58, 0.5);
+  eyeL.rotation.z = -EYE_ROT;
+  const eyeR = M(eyeWhiteGeo, eyeWhite, 0.072, EYE_Y, 0.178, 'eyeR');
+  eyeR.scale.set(1.15, 0.58, 0.5);
+  eyeR.rotation.z = EYE_ROT;
+
+  const pupilL = M(pupilGeo, MAT.dark, -0.072, EYE_Y - 0.003, 0.190, 'pupilL');
+  pupilL.scale.set(1, 0.85, 0.5);
+  pupilL.rotation.z = -EYE_ROT;
+  const pupilR = M(pupilGeo, MAT.dark, 0.072, EYE_Y - 0.003, 0.190, 'pupilR');
+  pupilR.scale.set(1, 0.85, 0.5);
+  pupilR.rotation.z = EYE_ROT;
+
+  const highlightL = M(highlightGeo, highlightMat, -0.066, EYE_Y + 0.003, 0.1985, 'highlightL');
+  const highlightR = M(highlightGeo, highlightMat, 0.066, EYE_Y + 0.003, 0.1985, 'highlightR');
+
+  // MÍ TRÊN: đường nâu nhạt, mỏng lại (đợt 3: scale y 0.11→0.09) đặt ngay trên tròng trắng
+  const lidL = M(lidFoldGeo, lidMat, -0.072, 1.746, 0.1795, 'lidL');
+  lidL.scale.set(1.18, 0.09, 0.5);
+  lidL.rotation.z = -EYE_ROT;
+  const lidR = M(lidFoldGeo, lidMat, 0.072, 1.746, 0.1795, 'lidR');
+  lidR.scale.set(1.18, 0.09, 0.5);
+  lidR.rotation.z = EYE_ROT;
+
+  // LÔNG MÀY: thẳng ngang, mỏng hơn, đáy dưới mép mái (mái đáy y≈1.774 đợt 3)
+  // v8 đợt 3: xoay z về 0 (ngang hẳn, hết chúc vào trong gây lườm); KHÔNG hạ y.
+  const browGeo = new THREE.BoxGeometry(0.082, 0.0105, 0.02);
+  const browL = M(browGeo, hairMat, -0.073, 1.7525, 0.184, 'browL');
+  browL.rotation.z = 0;
+  const browR = M(browGeo, hairMat, 0.073, 1.7525, 0.184, 'browR');
+  browR.rotation.z = 0;
+
+  // MŨI (v8 đợt 3): sống BÈ/mờ mép — rộng x 0.95→1.45, lùi z 0.198→0.1945,
+  // mỏng z 1.0→0.8 để 2 mép chìm vào mặt; chóp thu nhỏ/bẹt (r 0.018→0.016,
+  // scale y 0.8→0.65, z 0.9→0.75), hòa vào sống, KHÔNG thành cục tròn riêng.
+  // Vẫn giữ độ nhô silhouette khi nghiêng (đầu sống trước mặt ~17 mm).
+  const noseBridge = M(
+    new THREE.SphereGeometry(0.014, 12, 10),
+    MAT.skin, 0, 1.688, 0.1945, 'noseBridge'
+  );
+  noseBridge.scale.set(1.45, 3.0, 0.8); // dài theo y ~0.085, bề ngang ~0.041
+
+  const noseTip = M(
+    new THREE.SphereGeometry(0.016, 12, 10),
+    MAT.skin, 0, 1.656, 0.203, 'noseTip'
+  );
+  noseTip.scale.set(1.0, 0.65, 0.75);
+
+  const noseWingGeo = new THREE.SphereGeometry(0.0095, 8, 6);
+  const noseWingL = M(noseWingGeo, MAT.skin, -0.020, 1.649, 0.196, 'noseWingL');
+  noseWingL.scale.set(1, 0.85, 1);
+  const noseWingR = M(noseWingGeo, MAT.skin, 0.020, 1.649, 0.196, 'noseWingR');
+  noseWingR.scale.set(1, 0.85, 1);
+
+  const nostrilGeo = new THREE.SphereGeometry(0.0035, 6, 4);
+  const nostrilL = M(nostrilGeo, nostrilMat, -0.011, 1.6465, 0.2170, 'nostrilL');
+  nostrilL.scale.set(1, 0.75, 0.6);
+  const nostrilR = M(nostrilGeo, nostrilMat, 0.011, 1.6465, 0.2170, 'nostrilR');
+  nostrilR.scale.set(1, 0.75, 0.6);
+
+  // MIỆNG CƯỜI MỈM (v8 đợt 2): đường môi trên là cung tròn mảnh, rộng ~0.062,
+  // hai đầu nâng ~3.5 mm so với giữa (cười mỉm); môi dưới là ellipsoid chìm, gần da hơn.
+  const MOUTH_HALF = 0.031, MOUTH_SAG = 0.0035, MOUTH_TUBE = 0.0018;
+  const mouthR = (MOUTH_HALF * MOUTH_HALF + MOUTH_SAG * MOUTH_SAG) / (2 * MOUTH_SAG); // ~0.139
+  const mouthTheta = Math.asin(MOUTH_HALF / mouthR);
+  const lipUpper = M(
+    new THREE.TorusGeometry(mouthR, MOUTH_TUBE, 6, 24, 2 * mouthTheta),
+    lipMat, 0, 1.6265 + mouthR, 0.182, 'lipUpper'
+  );
+  lipUpper.rotation.z = -Math.PI / 2 - mouthTheta; // cung cong xuống, đầu nhếch lên
+
+  const lipLower = M(
+    new THREE.SphereGeometry(0.0225, 12, 8),
+    lipLight, 0, 1.6225, 0.1745, 'lipLower'
+  );
+  lipLower.scale.set(1, 0.11, 0.3);
+
+  // TAI: giữ nguyên như v8 — hơi vểnh ra ngoài
+  const earGeo = new THREE.SphereGeometry(0.042, 12, 8);
+  const earL = M(earGeo, MAT.skin, -0.196, 1.69, -0.005, 'earL');
+  earL.scale.set(0.4, 1.05, 0.75);
+  earL.rotation.z = 0.18; // đỉnh tai vểnh ra ngoài
+  const earR = M(earGeo, MAT.skin, 0.196, 1.69, -0.005, 'earR');
+  earR.scale.set(0.4, 1.05, 0.75);
+  earR.rotation.z = -0.18;
+
+  // -----------------------------------------------------------------
+  // TÓC BÁT ÚP — ĐIỂM NHẬN DẠNG SỐ 1.
+  //  - hair (vòm): chỏm cầu dẹt, phủ đỉnh + hơi nghiêng về sau để
+  //    mép trước không che lông mày; mép sau hạ thấp phủ gáy.
+  //  - hairFringe (mái bằng): HỘP, đáy THẲNG NGANG ở y=1.768 (ngang
+  //    lông mày) — KHÔNG vòm cong xuống trán. Rộng 0.30, vừa trong
+  //    bề ngang đầu ở độ cao đó (~0.34).
+  //  - hairSide L/R (mai): elip bo tròn hai bên, đáy trên đỉnh tai (y≈1.74).
+  //  - hairNape (gáy): elip bo tròn sau gáy xuống tới cổ y≈1.53.
+  //  - hairBack (vỏ sau): nửa trụ tròn ôm sau đầu, cho silhouette
+  //    sau lưng tròn đầy thay vì hộp.
+  // -----------------------------------------------------------------
+  // Tâm vòm 1.742 (v8 đợt 2: nâng từ 1.725 để đỉnh vòm ~1.918 > đỉnh đầu
+  // 1.91 — hết hói đỉnh; giữ nguyên bán kính và scale).
+  const hair = M(
+    new THREE.SphereGeometry(0.22, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.45),
+    hairMat, 0, 1.742, -0.012, 'hair'
+  );
+  hair.scale.set(1.04, 0.80, 1.04);
+  hair.rotation.x = -0.12; // nghiêng về sau: mép trước lên, mép sau xuống
+
+  // v8 đợt 2: thu rộng 0.33→0.30 và hạ đỉnh (h 0.088→0.072, tâm 1.812→1.804)
+  // để 2 góc trên không nhô qua vòm; ĐÁY vẫn y=1.768 (thẳng ngang lông mày).
+  // v8 đợt 3 (nới khe da mái–mày): mỏng chiều sâu z 0.075→0.068, h 0.072→0.066,
+  // nâng tâm 1.804→1.807 → ĐÁY lên 1.774 (+6 mm khe da), vẫn thẳng ngang.
+  const hairFringe = M(
+    new THREE.BoxGeometry(0.30, 0.066, 0.068),
+    hairMat, 0, 1.807, 0.170, 'hairFringe'
+  );
+  hairFringe.rotation.x = -0.06; // đỉnh mái hơi ngả sau, đáy vẫn thẳng ngang
+
+  // Mai = khối elip bo tròn (không hộp).
+  // v8 đợt 3: RÚT NGẮN — tâm y 1.77→1.79, cao y 0.034→0.020 → đáy 1.77,
+  // kết thúc TRÊN TAI (tai y 1.647–1.734), vẫn che thái dương, không rủ má/cằm.
+  const sideGeo = new THREE.SphereGeometry(1, 12, 8); // scale thành elip
+  const hairSideL = M(sideGeo, hairMat, -0.196, 1.79, 0.02, 'hairSideL');
+  hairSideL.scale.set(0.022, 0.020, 0.06);
+  const hairSideR = M(sideGeo, hairMat, 0.196, 1.79, 0.02, 'hairSideR');
+  hairSideR.scale.set(0.022, 0.020, 0.06);
+
+  // Gáy = elip bo tròn mép (thay hộp cạnh sắc), phủ sau đầu tới y≈1.53.
+  const hairNape = M(sideGeo, hairMat, 0, 1.65, -0.17, 'hairNape');
+  hairNape.scale.set(0.17, 0.12, 0.03);
+
+  // v8 đợt 3: thu góc ôm 0.55π/0.9π → 0.65π/0.70π — mép trước lùi từ
+  // (x ±0.208, z −0.033) về (x ±0.187, z −0.095), tức RA SAU TAI, không còn
+  // thò ra hai bên mặt xuống ngang cằm nhìn từ chính diện; lưng vẫn phủ
+  // kín 117°–243° nên silhouette sau lưng tròn đầy như cũ.
+  const hairBack = M(
+    new THREE.CylinderGeometry(0.21, 0.205, 0.20, 20, 1, true,
+      Math.PI * 0.65, Math.PI * 0.70),
+    hairMat, 0, 1.66, -0.01, 'hairBack'
+  );
+
+  // ---- Lắp ráp (thứ tự vẽ không quan trọng, Lambert không trong suốt) ----
+  player.add(
+    legL, legR, armL, armR,
+    torso, shoulders, collar, neck,
+    head, chin,
+    eyeL, eyeR, pupilL, pupilR, highlightL, highlightR, lidL, lidR,
+    browL, browR,
+    noseBridge, noseTip, noseWingL, noseWingR, nostrilL, nostrilR,
+    lipUpper, lipLower,
+    earL, earR,
+    hair, hairFringe, hairSideL, hairSideR, hairNape, hairBack
+  );
+
+  // Giao diện drop-in: code cũ dùng biến legL/armL/... — đính kèm lên
+  // group để Claude destructure một dòng (xem header file).
+  player.legL = legL;
+  player.legR = legR;
+  player.armL = armL;
+  player.armR = armR;
+  player.torso = torso;
+  player.head = head;
+  player.hair = hair;
+
+  player.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  return player;
+}
+
+const player = buildBossPlayer(THREE, MAT);
 scene.add(player);
-const legGeo = new THREE.BoxGeometry(0.22, 0.7, 0.24); legGeo.translate(0, -0.35, 0);
-const armGeo = new THREE.BoxGeometry(0.16, 0.6, 0.16); armGeo.translate(0, -0.3, 0);
-const legL = new THREE.Group(); legL.position.set(-0.13, 0.72, 0); legL.add(new THREE.Mesh(legGeo, MAT.pants));
-const legR = new THREE.Group(); legR.position.set(0.13, 0.72, 0);  legR.add(new THREE.Mesh(legGeo, MAT.pants));
-const armL = new THREE.Group(); armL.position.set(-0.34, 1.42, 0); armL.add(new THREE.Mesh(armGeo, MAT.shirt));
-const armR = new THREE.Group(); armR.position.set(0.34, 1.42, 0);  armR.add(new THREE.Mesh(armGeo, MAT.shirt));
-const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), MAT.shirt);
-torso.position.set(0, 1.07, 0);
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), MAT.skin);
-head.position.set(0, 1.72, 0);
-const hair = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.44), MAT.hair);
-hair.position.set(0, 1.9, -0.02);
-const face = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.05), MAT.dark);
-face.position.set(0, 1.74, 0.21); // "mặt" nhìn về phía trước
-player.add(legL, legR, armL, armR, torso, head, hair, face);
-player.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+const { legL, legR, armL, armR, torso, head, hair } = player;
 
 // Điểm xuất phát: anchor mainGate, quay mặt về giữa khuôn viên
 {
@@ -1747,8 +2028,8 @@ for (const [tag, list] of [['Khác hợp đồng', CONTRACT], ['Tích hợp', IN
     $('noteList').appendChild(li);
   }
 }
-if (CONTRACT.length) console.warn('[VGU v7]Khác hợp đồng module:', CONTRACT);
-if (INTEG.length) console.info('[VGU v7]Ghi chú tích hợp:', INTEG);
+if (CONTRACT.length) console.warn('[VGU v8]Khác hợp đồng module:', CONTRACT);
+if (INTEG.length) console.info('[VGU v8]Ghi chú tích hợp:', INTEG);
 
 const tmpV = new THREE.Vector3();
 // Nhãn căn giữa ngang theo điểm neo và nằm phía trên nó (translate -50%, -100%). Nhãn chỉ hiện khi điểm neo
@@ -1914,13 +2195,13 @@ function frame() {
       pixelRatio: renderer.getPixelRatio(), shadowMapSize: SHADOW_SIZE,
       shadowType: isTouch ? 'PCF' : 'PCFSoft', touch: isTouch
     });
-    console.info('[VGU v7]Frame đầu:', perf);
+    console.info('[VGU v8]Frame đầu:', perf);
     window.__VGU__ = {
       perf,
       perfNow,
       shell: () => ({ meshes: SHELL.length, alpha: shellA, interiorVisible: interior.visible }),
       pos: () => ({ x: P.x, y: P.y, z: P.z, floor: floorOf(), inside: insideMain() }),
-      version: 'v7',
+      version: 'v8',
       exterior: EXT_SOURCE,
       stops: STOPS.map((s) => s.id),
       go: (id) => { const s = STOP_BY_ID[id]; if (!s) return false; openStop(id); goStop(s); return !!auto; },
