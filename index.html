@@ -119,8 +119,8 @@ let livePipeline = null; // payload.pipeline tu Supabase
 let filter = "all";
 function showApp(){
   document.getElementById("app").classList.remove("hidden");
-  renderTabs(); renderAI(); loadHealth(); loadTasks(); tick();
-  setInterval(()=>{ loadHealth(); loadTasks(); tick(); }, 30000);
+  renderTabs(); renderAI(); loadHealth(); loadCommands(); tick();
+  setInterval(()=>{ loadHealth(); loadCommands(); tick(); }, 30000);
 }
 function tick(){
   const d = new Date();
@@ -223,7 +223,23 @@ function renderTasks(pipe){
     return `<div class="card" style="cursor:default"><div class="top"><div class="name" style="font-size:14px">${(t.tieu_de||"Công việc").replace(/</g,"&lt;")}</div><span class="badge ${badge}">${label}</span></div><div class="bar"><i style="width:${prog}%"></i></div><div class="prow"><span>${(t.nguoi_lam||"").replace(/</g,"&lt;")}${t.cap?" • Cấp "+t.cap:""}</span><span>Bước ${t.buoc||0}/8 • ${prog}%</span></div></div>`;
   }).join("");
 }
-async function loadTasks(){}
+const CMD_LABEL = {pending:"Đang chờ", processing:"Đang xử lý", done:"Đã trả lời", failed:"Lỗi"};
+async function loadCommands(){
+  try{
+    const r = await fetch(SUPABASE_URL + "/rest/v1/dashboard_commands?select=id,command,status,reply,created_at&order=created_at.desc&limit=10", {headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}});
+    const j = await r.json();
+    const el = document.getElementById("cmdList");
+    if(!el) return;
+    if(!Array.isArray(j) || !j.length){ el.innerHTML = "Chưa có lệnh nào."; return; }
+    el.innerHTML = j.map(c=>{
+      const cmd = String(c.command||"").replace(/</g,"&lt;");
+      const rep = c.reply ? String(c.reply).replace(/</g,"&lt;") : "";
+      const st = CMD_LABEL[c.status] || c.status || "";
+      const t = c.created_at ? new Date(c.created_at).toLocaleString("vi-VN") : "";
+      return `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0"><div><b>${cmd}</b> <span style="color:#64748b;font-size:12px">• ${st}${t?" • "+t:""}</span></div>${rep?`<div style="margin-top:4px;color:#166534">↳ ${rep}</div>`:""}</div>`;
+    }).join("");
+  }catch(e){ /* giữ nguyên nội dung hiện tại khi lỗi mạng */ }
+}
 async function sendCmd(){
   const v = document.getElementById("cmdInput").value.trim();
   if(!v) return;
@@ -231,6 +247,7 @@ async function sendCmd(){
     await fetch(SUPABASE_URL + "/rest/v1/dashboard_commands", {method:"POST", headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON,"Content-Type":"application/json","Prefer":"return=minimal"}, body: JSON.stringify({command:v, status:"pending"})});
     document.getElementById("cmdList").innerHTML = "Đã gửi: <b>" + v.replace(/</g,"&lt;") + "</b> — Tiểu Khôi sẽ trả lời.";
     document.getElementById("cmdInput").value = "";
+    loadCommands();
   }catch(e){ document.getElementById("cmdList").innerHTML = "Gửi lệnh thất bại, thử lại."; }
 }
 showApp();
