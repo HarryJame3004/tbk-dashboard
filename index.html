@@ -225,12 +225,16 @@ function renderTasks(pipe){
 }
 const CMD_LABEL = {pending:"Đang chờ", processing:"Đang xử lý", done:"Đã trả lời", failed:"Lỗi"};
 async function loadCommands(){
+  const el = document.getElementById("cmdList");
+  if(!el) return;
   try{
     const r = await fetch(SUPABASE_URL + "/rest/v1/dashboard_commands?select=id,command,status,reply,created_at&order=created_at.desc&limit=10", {headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}});
     const j = await r.json();
-    const el = document.getElementById("cmdList");
-    if(!el) return;
-    if(!Array.isArray(j) || !j.length){ el.innerHTML = "Chưa có lệnh nào."; return; }
+    // Phân biệt "không có lệnh" với "đọc lỗi": trước đây mọi lỗi đọc
+    // (mạng, RLS, HTTP != 200) đều hiện "Chưa có lệnh nào." nên không
+    // biết là chưa có lệnh hay đang lỗi.
+    if(!r.ok || !Array.isArray(j)){ el.innerHTML = "Không tải được danh sách lệnh (lỗi đọc dữ liệu). Thử tải lại trang."; return; }
+    if(!j.length){ el.innerHTML = "Chưa có lệnh nào."; return; }
     el.innerHTML = j.map(c=>{
       const cmd = String(c.command||"").replace(/</g,"&lt;");
       const rep = c.reply ? String(c.reply).replace(/</g,"&lt;") : "";
@@ -238,7 +242,7 @@ async function loadCommands(){
       const t = c.created_at ? new Date(c.created_at).toLocaleString("vi-VN") : "";
       return `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0"><div><b>${cmd}</b> <span style="color:#64748b;font-size:12px">• ${st}${t?" • "+t:""}</span></div>${rep?`<div style="margin-top:4px;color:#166534">↳ ${rep}</div>`:""}</div>`;
     }).join("");
-  }catch(e){ /* giữ nguyên nội dung hiện tại khi lỗi mạng */ }
+  }catch(e){ el.innerHTML = "Không tải được danh sách lệnh (lỗi mạng). Thử tải lại trang."; }
 }
 async function sendCmd(){
   const v = document.getElementById("cmdInput").value.trim();

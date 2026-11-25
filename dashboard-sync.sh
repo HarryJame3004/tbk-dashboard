@@ -19,7 +19,10 @@
 #       status=processing. KHÔNG tự chạy lệnh, chỉ chuyển tiếp.
 #   (4) Đọc ~/tbk/dashboard-outbox/<id>.txt (nếu Tiểu Khôi đã trả lời)
 #       rồi update bảng dashboard_commands status=done + cột reply,
-#       rồi xóa file outbox.
+#       rồi xóa file outbox VÀ file inbox tương ứng. Xóa inbox là
+#       chốt chống trả lời trùng: trước đây inbox không bao giờ bị xóa
+#       nên cron inbox-check thấy lại lệnh cũ ở mọi lần chạy và trả
+#       lời lại (ping id=1 bị trả Pong 5 lần).
 # Yêu cầu: set -u, log ra ~/tbk/logs/dashboard-sync.log, không in key
 # ra log, chạy được khi Supabase chưa có bảng (báo lỗi rõ, không crash loop).
 set -u
@@ -398,7 +401,7 @@ done < "$PENDING_LIST"
 rm -f "$PENDING_LIST"
 
 
-# --- (4) Đọc outbox, update done + reply, rồi xóa file ---
+# --- (4) Đọc outbox, update done + reply, rồi xóa file outbox + inbox ---
 for f in "$OUTBOX_DIR"/*.txt; do
   [ -e "$f" ] || continue
   base="$(basename "$f" .txt)"
@@ -419,11 +422,51 @@ PYEOF
   rm -f "$REPLY_BODY"
   if [ "$PATCH_CODE" = "200" ] || [ "$PATCH_CODE" = "204" ]; then
     rm -f "$f"
+    # Lệnh đã xong trên Supabase: xóa luôn file inbox để cron
+    # inbox-check không bao giờ thấy lại lệnh này (chống trả lời trùng).
+    # Chỉ xóa khi PATCH done đã thành công; PATCH lỗi thì giữ cả
+    # outbox lẫn inbox để lần sau thử lại.
+    rm -f "$INBOX_DIR/$cid.txt"
     log_msg "completed command id=$cid from outbox, status=done"
   else
     log_msg "ERROR update command id=$cid to done failed HTTP $PATCH_CODE, keeping outbox file"
   fi
 done
+
+
+# --- (4b) Dọn inbox của các lệnh đã done trên Supabase ---
+# Dọn file sót từ trước khi có cơ chế xóa inbox ở bước (4) (ví dụ
+# id=1/id=2 vẫn còn inbox dù đã done), và phòng trường hợp file inbox
+# còn sót vì lý do khác. Chỉ xóa khi Supabase xác nhận lệnh đã done
+# nên không mất lệnh chưa xong; nếu đọc danh sách done thất bại thì
+# bỏ qua, không chặn sync.
+DONE_BODY="$(mktemp)"
+DONE_CODE="$(curl -s -m 15 -o "$DONE_BODY" -w "%{http_code}" \
+  "$SUPABASE_URL/rest/v1/dashboard_commands?status=eq.done&select=id&order=id.desc&limit=100" \
+  -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" || echo "000")"
+if [ "$DONE_CODE" = "200" ]; then
+  DONE_IDS="$(mktemp)"
+  python3 - "$DONE_BODY" "$DONE_IDS" <<'PYEOF'
+import json, sys
+try:
+    rows = json.load(open(sys.argv[1]))
+except Exception:
+    rows = []
+with open(sys.argv[2], "w") as out:
+    for r in rows:
+        cid = str(r.get("id", ""))
+        if cid.isdigit():
+            out.write(cid + "\n")
+PYEOF
+  while read -r did; do
+    [ -n "$did" ] && rm -f "$INBOX_DIR/$did.txt"
+  done < "$DONE_IDS"
+  rm -f "$DONE_IDS"
+  log_msg "cleaned inbox files for done commands"
+else
+  log_msg "WARN fetch done commands failed HTTP $DONE_CODE, skipping inbox cleanup"
+fi
+rm -f "$DONE_BODY"
 
 
 log_msg "sync done"
